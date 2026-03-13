@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHS 1200K Korea | Race Planner</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+TC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap');
+  :root {
+    --bg:#0a0c0f; --surface:#111418; --surface2:#1a1f26; --border:#252c38;
+    --accent:#ff4d1c; --gold:#c9a84c; --green:#22c55e; --blue:#3b82f6;
+    --purple:#a855f7; --text:#e8edf5; --muted:#6b7a90; --sleep:#7c3aed;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
+
+  /* HERO */
+  .hero{position:relative;overflow:hidden;padding:60px 24px 48px;text-align:center;border-bottom:1px solid var(--border);}
+  .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(255,77,28,.18) 0%,transparent 70%),repeating-linear-gradient(0deg,transparent 39px,rgba(255,77,28,.04) 40px),repeating-linear-gradient(90deg,transparent 39px,rgba(255,77,28,.04) 40px);pointer-events:none;}
+  .badge{display:inline-block;background:var(--accent);color:#fff;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.12em;padding:4px 14px;border-radius:2px;margin-bottom:20px;text-transform:uppercase;}
+  .hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,10vw,120px);letter-spacing:.04em;line-height:.9;position:relative;}
+  .hero h1 span{color:var(--accent);}
+  .hero-sub{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);margin-top:16px;letter-spacing:.08em;}
+  .hero-stats{display:flex;justify-content:center;gap:40px;margin-top:36px;flex-wrap:wrap;}
+  .si{text-align:center;}
+  .sv{font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--accent);line-height:1;}
+  .sl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:4px;}
+
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px;}
+  .sh{display:flex;align-items:center;gap:12px;padding:36px 0 18px;}
+  .sh h2{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.06em;}
+  .stag{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);border:1px solid var(--accent);padding:2px 8px;letter-spacing:.1em;text-transform:uppercase;}
+
+  /* INFO */
+  .info{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);border-radius:4px;padding:12px 20px;margin-bottom:20px;font-size:12.5px;color:#93c5fd;display:flex;align-items:flex-start;gap:10px;}
+  .info .ic{font-size:16px;flex-shrink:0;margin-top:2px;}
+
+  /* TABLE */
+  .tw{overflow-x:auto;border:1px solid var(--border);border-radius:4px;margin-bottom:40px;}
+  table{width:100%;border-collapse:collapse;min-width:820px;}
+  thead{background:var(--surface2);border-bottom:2px solid var(--accent);}
+  th{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:11px 14px;text-align:left;white-space:nowrap;}
+  tr{border-bottom:1px solid var(--border);transition:background .12s;}
+  tr:last-child{border-bottom:none;}
+  tr:hover{background:rgba(255,255,255,.025);}
+  td{padding:11px 14px;vertical-align:middle;}
+  .rs{background:rgba(255,77,28,.05);}
+  .rsl{background:rgba(124,58,237,.07);}
+  .rf{background:rgba(34,197,94,.05);}
+
+  .dist{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;padding:2px 8px;border-radius:2px;white-space:nowrap;}
+  .dn{color:var(--accent);background:rgba(255,77,28,.1);}
+  .ds{color:#c4b5fd;background:rgba(168,85,247,.15);}
+  .df{color:var(--green);background:rgba(34,197,94,.12);}
+
+  .nz{font-weight:500;font-size:13px;}
+  .ne{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+  .hb{display:inline-block;margin-top:5px;font-size:10px;font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,.2);color:#c4b5fd;border:1px solid rgba(168,85,247,.3);padding:2px 8px;border-radius:2px;}
+
+  .tm{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;white-space:nowrap;}
+  .ts{font-size:10px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace;}
+
+  .day{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:#fff;padding:2px 7px;border-radius:2px;white-space:nowrap;}
+  .d1{background:#1d4ed8;} .d2{background:#047857;} .d3{background:#b45309;} .d4{background:#9a3412;}
+
+  .tag{display:inline-block;padding:2px 7px;border-radius:2px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+  .ts2{background:rgba(59,130,246,.2);color:#93c5fd;}
+  .tl{background:rgba(245,158,11,.18);color:#fcd34d;}
+  .tsl{background:rgba(124,58,237,.3);color:#c4b5fd;}
+  .tst{background:rgba(255,77,28,.25);color:#fca5a5;}
+  .tf{background:rgba(34,197,94,.25);color:#86efac;}
+  .tc{background:rgba(251,191,36,.2);color:#fde68a;}
+
+  .navs{display:flex;gap:5px;flex-wrap:wrap;}
+  .nav{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;text-decoration:none;padding:3px 9px;border-radius:2px;transition:opacity .15s;white-space:nowrap;}
+  .nav:hover{opacity:.72;}
+  .nv{background:#03C75A;color:#fff;}
+  .gg{background:#4285F4;color:#fff;}
+  .kk{background:#FEE500;color:#3C1E1E;}
+
+  /* BUDGET */
+  .bc{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:24px;margin-bottom:40px;}
+  .bl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;}
+  .sb{display:flex;height:14px;border-radius:3px;overflow:hidden;gap:2px;margin-bottom:12px;}
+  .seg{height:100%;border-radius:2px;}
+  .bleg{display:flex;gap:18px;flex-wrap:wrap;}
+  .leg{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+  .ld{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+  .bn{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:20px;}
+  .bni{text-align:center;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:14px;}
+  .bnv{font-family:'Bebas Neue',sans-serif;font-size:30px;line-height:1;}
+  .bnl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px;}
+
+  /* TIPS */
+  .tg{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:40px;}
+  .tip{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:18px;}
+  .tip h3{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:.06em;margin-bottom:10px;}
+  .tip p,.tip li{font-size:12.5px;color:var(--muted);line-height:1.75;}
+  .tip ul{padding-left:16px;}
+  .tip li{margin-bottom:3px;}
+  .tip strong{color:var(--text);}
+
+  footer{border-top:1px solid var(--border);padding:22px 0;text-align:center;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.07em;}
+  footer a{color:var(--accent);text-decoration:none;}
+  @media(max-width:600px){.hero-stats{gap:18px;}.sv{font-size:32px;}th,td{padding:9px 9px;}.navs{gap:4px;}.nav{font-size:9px;padding:2px 6px;}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="badge">🇰🇷 Korea Randonneuring · 2026</div>
+  <h1>SHS <span>1200K</span></h1>
+  <div class="hero-sub">SUPER HIGHWAY SERIA · FULL COURSE · RACE PLANNER</div>
+  <div class="hero-stats">
+    <div class="si"><div class="sv">1,199</div><div class="sl">Total km</div></div>
+    <div class="si"><div class="sv" style="color:var(--gold)">9,396</div><div class="sl">Elevation m</div></div>
+    <div class="si"><div class="sv" style="color:var(--blue)">85h</div><div class="sl">完賽目標</div></div>
+    <div class="si"><div class="sv" style="color:var(--purple)">3</div><div class="sl">住宿點</div></div>
+    <div class="si"><div class="sv" style="color:var(--muted)">90h</div><div class="sl">Official Cutoff</div></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="sh"><h2>賽事行程表</h2><span class="stag">Race Schedule</span></div>
+  <div class="info">
+    <span class="ic">ℹ️</span>
+    <span>
+      配速假設：有效均速 <strong>20 km/h</strong>（平路 25 + 爬坡 12–15 折算）· 補給停留 <strong>10min</strong> · 午餐 <strong>30min</strong>。
+      住宿規則：住宿點 #1 &amp; #3 凌晨 <strong>03:00 出發</strong>；住宿點 #2（菀島）<strong>05:00 出發</strong>。
+      目標完賽 <strong>06/09 19:00（85h）</strong>，官方 90h 關門。
+    </span>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead>
+        <tr><th>Day</th><th>距離</th><th>地點</th><th>預計抵達</th><th>出發時間</th><th>累計時數</th><th>性質</th><th>導航</th></tr>
+      </thead>
+      <tbody>
+
+        <!-- D1 START -->
+        <tr class="rs">
+          <td><span class="day d1">D1</span></td>
+          <td><span class="dist dn">0 km</span></td>
+          <td><div class="nz">🚩 起點 하남 미사리</div><div class="ne">Start · Hanam Misari</div></td>
+          <td><div class="tm">06/06 06:00</div></td>
+          <td><div class="tm" style="color:var(--accent)">06:00</div></td>
+          <td><div class="tm">0h</div></td>
+          <td><span class="tag tst">🚩 出發</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/하남미사리경정공원" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=37.5451,127.1192" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=하남미사리" target="_blank">Kakao</a></div></td>
+        </tr>
+
+        <tr>
+          <td><span class="day d1">D1</span></td>
+          <td><span class="dist dn">50 km</span></td>
+          <td><div class="nz">이천 (Icheon)</div><div class="ne">Icheon City</div></td>
+          <td><div class="tm">06/06 08:30</div></td>
+          <td><div class="ts">+10min → 08:40</div></td>
+          <td><div class="tm">2.7h</div></td>
+          <td><span class="tag ts2">補給</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/이천시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=37.27,127.44" target="_blank">Google</a></div></td>
+        </tr>
+
+        <tr>
+          <td><span class="day d1">D1</span></td>
+          <td><span class="dist dn">100 km</span></td>
+          <td><div class="nz">음성 (Eumseong)</div><div class="ne">Eumseong County</div></td>
+          <td><div class="tm">06/06 11:10</div></td>
+          <td><div class="ts">+10min → 11:20</div></td>
+          <td><div class="tm">5.3h</div></td>
+          <td><span class="tag ts2">補給</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/음성군" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=37.193,127.746" target="_blank">Google</a></div></td>
+        </tr>
+
+        <tr>
+          <td><span class="day d1">D1</span></td>
+          <td><span class="dist dn">160 km</span></td>
+          <td><div class="nz">청주 (Cheongju)</div><div class="ne">Cheongju City</div></td>
+          <td><div class="tm">06/06 14:20</div></td>
+          <td><div class="ts">+30min → 14:50</div></td>
+          <td><div class="tm">8.8h</div></td>
+          <td><span class="tag tl">🍱 午餐</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/청주시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=36.64,127.49" target="_blank">Google</a></div></td>
+        </tr>
+
+        <tr>
+          <td><span class="day d1">D1</span></td>
+          <td><span class="dist dn">220 km</span></td>
+          <td><div class="nz">대전 (Daejeon)</div><div class="ne">Daejeon · CP1</div></td>
+          <td><div class="tm">06/06 17:50</div></td>
+          <td><div class="ts">+10min → 18:00</div></td>
+          <td><div class="tm">12.0h</div></td>
+          <td><span class="tag tc">📍 CP1</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/대전시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=36.35,127.39" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=대전" target="_blank">Kakao</a></div></td>
+        </tr>
+
+        <tr>
+          <td><span class="day d1">D1</span></td>
+          <td><span class="dist dn">280 km</span></td>
+          <td><div class="nz">논산 (Nonsan)</div><div class="ne">Nonsan City</div></td>
+          <td><div class="tm">06/06 21:00</div></td>
+          <td><div class="ts">+10min → 21:10</div></td>
+          <td><div class="tm">15.2h</div></td>
+          <td><span class="tag ts2">補給</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/논산시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=36.19,127.08" target="_blank">Google</a></div></td>
+        </tr>
+
+        <!-- SLEEP 1 -->
+        <tr class="rsl">
+          <td><span class="day d1">D1→D2</span></td>
+          <td><span class="dist ds">340 km</span></td>
+          <td><div class="nz">🛏 익산 住宿點 #1</div><div class="ne">Iksan City · Sleep Stop #1</div><div class="hb">🏨 H大道飯店 · H Avenue Hotel</div></td>
+          <td><div class="tm">06/07 00:10</div></td>
+          <td><div class="tm" style="color:#a78bfa">03:00 出發<br><span class="ts" style="color:var(--muted)">睡眠約 2h50min</span></div></td>
+          <td><div class="tm" style="color:var(--purple)">21.0h</div></td>
+          <td><span class="tag tsl">🛏 住宿</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/익산+H대로호텔" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=35.9482,126.9579" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=익산+H대로호텔" target="_blank">Kakao</a></div></td>
+        </tr>
+
+        <!-- D2 -->
+        <tr>
+          <td><span class="day d2">D2</span></td>
+          <td><span class="dist dn">390 km</span></td>
+          <td><div class="nz">김제 (Gimje)</div><div class="ne">Gimje City</div></td>
+          <td><div class="tm">06/07 05:30</div></td>
+          <td><div class="ts">+30min → 06:00</div></td>
+          <td><div class="tm">24.0h</div></td>
+          <td><span class="tag tl">🍱 午餐</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/김제시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=35.80,126.89" target="_blank">Google</a></div></td>
+        </tr>
+
+        <tr>
+          <td><span class="day d2">D2</span></td>
+          <td><span class="dist dn">450 km</span></td>
+          <td><div class="nz">광주 (Gwangju)</div><div class="ne">Gwangju · CP2</div></td>
+          <td><div class="tm">06/07 09:00</div></td>
+          <td><div class="ts">+10min → 09:10</div></td>
+          <td><div class="tm">27.2h</div></td>
+          <td><span class="tag tc">📍 CP2</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/광주광역시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=35.16,126.85" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=광주" target="_blank">Kakao</a></div></td>
+        </tr>
+
+        <tr>
+          <td><span class="day d2">D2</span></td>
+          <td><span class="dist dn">500 km</span></td>
+          <td><div class="nz">나주 (Naju)</div><div class="ne">Naju City</div></td>
+          <td><div class="tm">06/07 11:40</div></td>
+          <td><div class="ts">+10min → 11:50</div></td>
+          <td><div class="tm">29.8h</div></td>
+          <td><span class="tag ts2">補給</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/나주시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=34.98,126.71" target="_blank">Google</a></div></td>
+        </tr>
+
+        <tr>
+          <td><span class="day d2">D2</span></td>
+          <td><span class="dist dn">560 km</span></td>
+          <td><div class="nz">목포 (Mokpo)</div><div class="ne">Mokpo · CP3</div></td>
+          <td><div class="tm">06/07 14:50</div></td>
+          <td><div class="ts">+30min → 15:20</div></td>
+          <td><div class="tm">33.3h</div></td>
+          <td><span class="tag tc">📍 CP3 🍱</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/목포시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=34.81,126.39" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=목포" target="_blank">Kakao</a></div></td>
+        </tr>
+
+        <!-- SLEEP 2 — 05:00 出發 -->
+        <tr class="rsl">
+          <td><span class="day d2">D2→D3</span></td>
+          <td><span class="dist ds">640 km</span></td>
+          <td><div class="nz">🛏 완도 住宿點 #2</div><div class="ne">Wando County · Sleep Stop #2</div><div class="hb">🏨 菀島內西亞飯店 · Wando Nesia Hotel</div></td>
+          <td><div class="tm">06/07 19:20</div></td>
+          <td>
+            <div class="tm" style="color:#a78bfa">05:00 出發</div>
+            <div class="ts" style="color:var(--muted)">睡眠約 9h40min ✓ 最充足</div>
+          </td>
+          <td><div class="tm" style="color:var(--purple)">47.0h</div></td>
+          <td><span class="tag tsl">🛏 住宿</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/완도+네시아호텔" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=34.3144,126.7547" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=완도+네시아호텔" target="_blank">Kakao</a></div></td>
+        </tr>
+
+        <!-- D3 -->
+        <tr>
+          <td><span class="day d3">D3</span></td>
+          <td><span class="dist dn">700 km</span></td>
+          <td><div class="nz">보성 (Boseong)</div><div class="ne">Boseong · Tea Fields</div></td>
+          <td><div class="tm">06/08 08:00</div></td>
+          <td><div class="ts">+10min → 08:10</div></td>
+          <td><div class="tm">50.2h</div></td>
+          <td><span class="tag ts2">補給</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/보성군" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=34.77,127.08" target="_blank">Google</a></div></td>
+        </tr>
+
+        <tr>
+          <td><span class="day d3">D3</span></td>
+          <td><span class="dist dn">760 km</span></td>
+          <td><div class="nz">순천 (Suncheon)</div><div class="ne">Suncheon City</div></td>
+          <td><div class="tm">06/08 11:10</div></td>
+          <td><div class="ts">+30min → 11:40</div></td>
+          <td><div class="tm">53.7h</div></td>
+          <td><span class="tag tl">🍱 午餐</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/순천시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=34.95,127.49" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=순천" target="_blank">Kakao</a></div></td>
+        </tr>
+
+        <tr>
+          <td><span class="day d3">D3</span></td>
+          <td><span class="dist dn">820 km</span></td>
+          <td><div class="nz">남원 (Namwon)</div><div class="ne">Namwon · Jirisan Base</div></td>
+          <td><div class="tm">06/08 14:40</div></td>
+          <td><div class="ts">+10min → 14:50</div></td>
+          <td><div class="tm">56.8h</div></td>
+          <td><span class="tag ts2">補給</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/남원시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=35.41,127.39" target="_blank">Google</a></div></td>
+        </tr>
+
+        <tr>
+          <td><span class="day d3">D3</span></td>
+          <td><span class="dist dn">880 km</span></td>
+          <td><div class="nz">전주 (Jeonju)</div><div class="ne">Jeonju · CP4</div></td>
+          <td><div class="tm">06/08 17:50</div></td>
+          <td><div class="ts">+10min → 18:00</div></td>
+          <td><div class="tm">60.0h</div></td>
+          <td><span class="tag tc">📍 CP4</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/전주시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=35.82,127.15" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=전주" target="_blank">Kakao</a></div></td>
+        </tr>
+
+        <!-- SLEEP 3 -->
+        <tr class="rsl">
+          <td><span class="day d3">D3→D4</span></td>
+          <td><span class="dist ds">940 km</span></td>
+          <td><div class="nz">🛏 익산 住宿點 #3</div><div class="ne">Iksan City · Sleep Stop #3</div><div class="hb">🏨 H大道飯店 · H Avenue Hotel</div></td>
+          <td><div class="tm">06/08 21:00</div></td>
+          <td><div class="tm" style="color:#a78bfa">03:00 出發<br><span class="ts" style="color:var(--muted)">睡眠約 6h</span></div></td>
+          <td><div class="tm" style="color:var(--purple)">69.0h</div></td>
+          <td><span class="tag tsl">🛏 住宿</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/익산+H대로호텔" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=35.9482,126.9579" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=익산+H대로호텔" target="_blank">Kakao</a></div></td>
+        </tr>
+
+        <!-- D4 -->
+        <tr>
+          <td><span class="day d4">D4</span></td>
+          <td><span class="dist dn">1000 km</span></td>
+          <td><div class="nz">공주 (Gongju)</div><div class="ne">Gongju City</div></td>
+          <td><div class="tm">06/09 06:00</div></td>
+          <td><div class="ts">+30min → 06:30</div></td>
+          <td><div class="tm">72.5h</div></td>
+          <td><span class="tag tl">🍱 午餐</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/공주시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=36.45,127.12" target="_blank">Google</a></div></td>
+        </tr>
+
+        <tr>
+          <td><span class="day d4">D4</span></td>
+          <td><span class="dist dn">1060 km</span></td>
+          <td><div class="nz">천안 (Cheonan)</div><div class="ne">Cheonan City</div></td>
+          <td><div class="tm">06/09 09:30</div></td>
+          <td><div class="ts">+10min → 09:40</div></td>
+          <td><div class="tm">75.7h</div></td>
+          <td><span class="tag ts2">補給</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/천안시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=36.81,127.15" target="_blank">Google</a></div></td>
+        </tr>
+
+        <tr>
+          <td><span class="day d4">D4</span></td>
+          <td><span class="dist dn">1120 km</span></td>
+          <td><div class="nz">수원 (Suwon)</div><div class="ne">Suwon City</div></td>
+          <td><div class="tm">06/09 12:40</div></td>
+          <td><div class="ts">+10min → 12:50</div></td>
+          <td><div class="tm">78.8h</div></td>
+          <td><span class="tag ts2">補給</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/수원시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=37.26,127.00" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=수원" target="_blank">Kakao</a></div></td>
+        </tr>
+
+        <!-- FINISH -->
+        <tr class="rf">
+          <td><span class="day d4">D4</span></td>
+          <td><span class="dist df">1199 km</span></td>
+          <td><div class="nz">🏁 終點 하남 미사리</div><div class="ne">Finish · Hanam Misari</div></td>
+          <td><div class="tm" style="color:var(--green)">06/09 19:00</div></td>
+          <td><div class="ts" style="color:var(--green)">目標達成 ✓</div></td>
+          <td><div class="tm" style="color:var(--green)">85h 🏆</div></td>
+          <td><span class="tag tf">🏆 完賽</span></td>
+          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/하남미사리경정공원" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=37.54568,127.12043" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=하남미사리" target="_blank">Kakao</a></div></td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <!-- BUDGET -->
+  <div class="sh"><h2>時間分配</h2><span class="stag">85h Budget</span></div>
+  <div class="bc">
+    <div class="bl">85小時完賽目標分解</div>
+    <div class="sb">
+      <div class="seg" style="flex:60;background:linear-gradient(90deg,var(--accent),#ff7849)"></div>
+      <div class="seg" style="flex:18;background:var(--sleep)"></div>
+      <div class="seg" style="flex:4;background:var(--gold)"></div>
+      <div class="seg" style="flex:3;background:rgba(255,255,255,.07)"></div>
+    </div>
+    <div class="bleg">
+      <div class="leg"><div class="ld" style="background:var(--accent)"></div>騎行 ~60h（均速 20 km/h）</div>
+      <div class="leg"><div class="ld" style="background:var(--sleep)"></div>睡眠 ~18h（#1: 2h50min · #2: 9h40min · #3: 6h）</div>
+      <div class="leg"><div class="ld" style="background:var(--gold)"></div>補給停留 ~4h</div>
+      <div class="leg"><div class="ld" style="background:rgba(255,255,255,.1)"></div>官方90h關門餘裕 5h</div>
+    </div>
+    <div class="bn">
+      <div class="bni"><div class="bnv" style="color:var(--accent)">1,199</div><div class="bnl">Total km</div></div>
+      <div class="bni"><div class="bnv" style="color:var(--gold)">9,396</div><div class="bnl">Elevation m</div></div>
+      <div class="bni"><div class="bnv" style="color:var(--blue)">20</div><div class="bnl">Eff. km/h</div></div>
+      <div class="bni"><div class="bnv" style="color:var(--purple)">~18h</div><div class="bnl">Total Sleep</div></div>
+      <div class="bni"><div class="bnv" style="color:var(--green)">85h</div><div class="bnl">目標完賽</div></div>
+      <div class="bni"><div class="bnv" style="color:var(--muted)">+5h</div><div class="bnl">官方關門餘裕</div></div>
+    </div>
+  </div>
+
+  <!-- HOTELS -->
+  <div class="sh"><h2>住宿點資訊</h2><span class="stag">Sleep Stops</span></div>
+  <div class="tg" style="margin-bottom:40px">
+    <div class="tip" style="border-color:rgba(168,85,247,.35)">
+      <h3 style="color:#c4b5fd">🏨 住宿點 #1 &amp; #3 — H大道飯店</h3>
+      <p style="color:var(--text);margin-bottom:8px">益山市 (익산시) · H대로호텔</p>
+      <ul>
+        <li>#1 抵達：<strong>06/07 00:10</strong> → 睡眠約 <strong>2h50min</strong>（最短）</li>
+        <li>#3 抵達：<strong>06/08 21:00</strong> → 睡眠約 <strong>6h</strong></li>
+        <li>兩次均 <strong>03:00 出發</strong></li>
+        <li>同一飯店，需預訂兩個不同日期</li>
+        <li>告知前台需要 <strong>凌晨 3 點 Checkout</strong></li>
+      </ul>
+      <div class="navs" style="margin-top:12px">
+        <a class="nav nv" href="https://map.naver.com/v5/search/익산+H대로호텔" target="_blank">Naver</a>
+        <a class="nav gg" href="https://maps.google.com/?q=35.9482,126.9579" target="_blank">Google</a>
+        <a class="nav kk" href="https://map.kakao.com/?q=익산+H대로호텔" target="_blank">Kakao</a>
+      </div>
+    </div>
+    <div class="tip" style="border-color:rgba(168,85,247,.35)">
+      <h3 style="color:#c4b5fd">🏨 住宿點 #2 — 菀島內西亞飯店</h3>
+      <p style="color:var(--text);margin-bottom:8px">菀島郡 (완도군) · 완도 네시아호텔</p>
+      <ul>
+        <li>#2 抵達：<strong>06/07 19:20</strong> → 睡眠約 <strong>9h40min</strong> ✓ 最充足</li>
+        <li><strong>05:00 出發</strong>（比其他住宿點晚出發 2 小時）</li>
+        <li>菀島為半島地形，全程最南端住宿點</li>
+        <li>告知前台需要 <strong>凌晨 5 點 Checkout</strong></li>
+        <li>出發前確認 05:00 附近便利店或自備早餐</li>
+      </ul>
+      <div class="navs" style="margin-top:12px">
+        <a class="nav nv" href="https://map.naver.com/v5/search/완도+네시아호텔" target="_blank">Naver</a>
+        <a class="nav gg" href="https://maps.google.com/?q=34.3144,126.7547" target="_blank">Google</a>
+        <a class="nav kk" href="https://map.kakao.com/?q=완도+네시아호텔" target="_blank">Kakao</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- STRATEGY -->
+  <div class="sh"><h2>配速策略</h2><span class="stag">Race Strategy</span></div>
+  <div class="tg">
+    <div class="tip">
+      <h3 style="color:var(--accent)">⚡ 配速基準</h3>
+      <ul>
+        <li>平路巡航目標：<strong>25 km/h</strong></li>
+        <li>爬坡（FTP/W 2.5–3）：<strong>12–15 km/h</strong></li>
+        <li>計算用有效均速：<strong>20 km/h</strong></li>
+        <li>每掉 1 km/h ≈ 多花 <strong>+3h</strong></li>
+        <li>D3（760–940km）爬升最密集，提前保留腿力</li>
+      </ul>
+    </div>
+    <div class="tip">
+      <h3 style="color:var(--gold)">🚨 應急預案</h3>
+      <ul>
+        <li>落後 30min → 補給縮為 <strong>5min</strong></li>
+        <li>落後 60min → 午餐改邊騎邊吃，省 <strong>20min</strong></li>
+        <li>落後 90min → <strong>縮短住宿睡眠 1h</strong>，提早出發</li>
+        <li>下坡衝 <strong>35–40 km/h</strong> 主動補回時間</li>
+        <li>目標本身無緩衝，<strong>每站必須嚴守停留時間</strong></li>
+      </ul>
+    </div>
+    <div class="tip">
+      <h3 style="color:var(--green)">🗺 韓國導航</h3>
+      <ul>
+        <li><strong>Naver Map</strong>：最準確，有自行車坡度預覽</li>
+        <li><strong>KakaoMap</strong>：查即時路況、便利店</li>
+        <li>Google Maps 韓國導航功能受限，僅作備用</li>
+        <li>建議下載 <strong>Komoot</strong> 離線路線備用</li>
+        <li>路線：<a href="http://ridewithgps.com/routes/54047138" target="_blank" style="color:var(--accent)">RideWithGPS #54047138</a></li>
+      </ul>
+    </div>
+    <div class="tip">
+      <h3 style="color:var(--purple)">🍜 補碳美食</h3>
+      <ul>
+        <li><strong>전주 콩나물국밥</strong>：全州豆芽湯飯，補鈉</li>
+        <li><strong>목포 낙지볼음</strong>：目浦炒章魚，高蛋白</li>
+        <li><strong>돼지국밥</strong>：豬肉湯飯，熱量密度高</li>
+        <li><strong>짜장면</strong>：炸醬麵，快速補充碳水</li>
+        <li>完賽慶祝：<strong>삼겹살</strong> 烤五花肉 🎉</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    SHS 1200K Korea · Race Planner ·
+    <a href="http://ridewithgps.com/routes/54047138" target="_blank">RideWithGPS #54047138</a> ·
+    出發 2026/06/06 06:00 · 目標完賽 85h · 官方關門 90h
+  </div>
+</footer>
+</body>
+</html>
