@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SHS 1200K Korea | Race Planner</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+TC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap');
   :root {
@@ -15,27 +17,62 @@
   body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
 
   /* HERO */
-  .hero{position:relative;overflow:hidden;padding:60px 24px 48px;text-align:center;border-bottom:1px solid var(--border);}
+  .hero{position:relative;overflow:hidden;padding:50px 24px 40px;text-align:center;border-bottom:1px solid var(--border);}
   .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(255,77,28,.18) 0%,transparent 70%),repeating-linear-gradient(0deg,transparent 39px,rgba(255,77,28,.04) 40px),repeating-linear-gradient(90deg,transparent 39px,rgba(255,77,28,.04) 40px);pointer-events:none;}
-  .badge{display:inline-block;background:var(--accent);color:#fff;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.12em;padding:4px 14px;border-radius:2px;margin-bottom:20px;text-transform:uppercase;}
-  .hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,10vw,120px);letter-spacing:.04em;line-height:.9;position:relative;}
+  .badge{display:inline-block;background:var(--accent);color:#fff;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.12em;padding:4px 14px;border-radius:2px;margin-bottom:16px;text-transform:uppercase;}
+  .hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,9vw,110px);letter-spacing:.04em;line-height:.9;position:relative;}
   .hero h1 span{color:var(--accent);}
-  .hero-sub{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);margin-top:16px;letter-spacing:.08em;}
-  .hero-stats{display:flex;justify-content:center;gap:40px;margin-top:36px;flex-wrap:wrap;}
+  .hero-sub{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);margin-top:14px;letter-spacing:.08em;}
+  .hero-stats{display:flex;justify-content:center;gap:36px;margin-top:28px;flex-wrap:wrap;}
   .si{text-align:center;}
-  .sv{font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--accent);line-height:1;}
-  .sl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:4px;}
+  .sv{font-family:'Bebas Neue',sans-serif;font-size:38px;color:var(--accent);line-height:1;}
+  .sl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:3px;}
 
   .wrap{max-width:1120px;margin:0 auto;padding:0 20px;}
-  .sh{display:flex;align-items:center;gap:12px;padding:36px 0 18px;}
-  .sh h2{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.06em;}
+  .sh{display:flex;align-items:center;gap:12px;padding:32px 0 16px;}
+  .sh h2{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.06em;}
   .stag{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);border:1px solid var(--accent);padding:2px 8px;letter-spacing:.1em;text-transform:uppercase;}
 
-  /* INFO */
-  .info{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);border-radius:4px;padding:12px 20px;margin-bottom:20px;font-size:12.5px;color:#93c5fd;display:flex;align-items:flex-start;gap:10px;}
-  .info .ic{font-size:16px;flex-shrink:0;margin-top:2px;}
+  /* ── MAP SECTION ── */
+  #map-section{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:24px;}
+  #map{height:500px;width:100%;}
+  .map-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+  .map-header h3{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.06em;color:var(--text);}
+  #locate-btn{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--accent);color:#fff;border:none;padding:8px 16px;border-radius:3px;cursor:pointer;transition:opacity .2s;display:flex;align-items:center;gap:6px;}
+  #locate-btn:hover{opacity:.8;}
+  #locate-btn:disabled{opacity:.5;cursor:not-allowed;}
+  .map-footer{padding:14px 18px;border-top:1px solid var(--border);background:var(--surface2);}
+
+  /* LIVE STATUS CARD */
+  #status-card{display:none;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:16px 20px;}
+  #status-card.visible{display:block;}
+  .status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
+  .status-item{text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px;}
+  .status-val{font-family:'Bebas Neue',sans-serif;font-size:28px;line-height:1;}
+  .status-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px;}
+  #next-cp-bar{margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px 16px;}
+  .ncp-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;}
+  .ncp-name{font-weight:700;font-size:13px;}
+  .ncp-detail{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+  .progress-track{height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),#ff7849);border-radius:4px;transition:width .5s ease;}
+  #gps-status{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-top:8px;}
+  #gps-status.ok{color:var(--green);}
+  #gps-status.err{color:#ef4444;}
+
+  /* Leaflet dark overrides */
+  .leaflet-container{background:#0d1117;}
+  .leaflet-popup-content-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:4px;box-shadow:0 4px 20px rgba(0,0,0,.6);}
+  .leaflet-popup-content{color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:12px;margin:10px 14px;}
+  .leaflet-popup-tip{background:var(--surface);}
+  .leaflet-popup-close-button{color:var(--muted)!important;}
+  .cp-popup-name{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:.04em;margin-bottom:4px;}
+  .cp-popup-row{display:flex;justify-content:space-between;gap:16px;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+  .cp-popup-row span:last-child{color:var(--text);}
 
   /* TABLE */
+  .info{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);border-radius:4px;padding:12px 20px;margin-bottom:20px;font-size:12.5px;color:#93c5fd;display:flex;align-items:flex-start;gap:10px;}
+  .info .ic{font-size:16px;flex-shrink:0;margin-top:2px;}
   .tw{overflow-x:auto;border:1px solid var(--border);border-radius:4px;margin-bottom:40px;}
   table{width:100%;border-collapse:collapse;min-width:820px;}
   thead{background:var(--surface2);border-bottom:2px solid var(--accent);}
@@ -47,22 +84,17 @@
   .rs{background:rgba(255,77,28,.05);}
   .rsl{background:rgba(124,58,237,.07);}
   .rf{background:rgba(34,197,94,.05);}
-
   .dist{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;padding:2px 8px;border-radius:2px;white-space:nowrap;}
   .dn{color:var(--accent);background:rgba(255,77,28,.1);}
   .ds{color:#c4b5fd;background:rgba(168,85,247,.15);}
   .df{color:var(--green);background:rgba(34,197,94,.12);}
-
   .nz{font-weight:500;font-size:13px;}
   .ne{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px;}
   .hb{display:inline-block;margin-top:5px;font-size:10px;font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,.2);color:#c4b5fd;border:1px solid rgba(168,85,247,.3);padding:2px 8px;border-radius:2px;}
-
   .tm{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;white-space:nowrap;}
   .ts{font-size:10px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace;}
-
   .day{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:#fff;padding:2px 7px;border-radius:2px;white-space:nowrap;}
   .d1{background:#1d4ed8;} .d2{background:#047857;} .d3{background:#b45309;} .d4{background:#9a3412;}
-
   .tag{display:inline-block;padding:2px 7px;border-radius:2px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;white-space:nowrap;}
   .ts2{background:rgba(59,130,246,.2);color:#93c5fd;}
   .tl{background:rgba(245,158,11,.18);color:#fcd34d;}
@@ -70,7 +102,6 @@
   .tst{background:rgba(255,77,28,.25);color:#fca5a5;}
   .tf{background:rgba(34,197,94,.25);color:#86efac;}
   .tc{background:rgba(251,191,36,.2);color:#fde68a;}
-
   .navs{display:flex;gap:5px;flex-wrap:wrap;}
   .nav{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;text-decoration:none;padding:3px 9px;border-radius:2px;transition:opacity .15s;white-space:nowrap;}
   .nav:hover{opacity:.72;}
@@ -102,7 +133,7 @@
 
   footer{border-top:1px solid var(--border);padding:22px 0;text-align:center;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.07em;}
   footer a{color:var(--accent);text-decoration:none;}
-  @media(max-width:600px){.hero-stats{gap:18px;}.sv{font-size:32px;}th,td{padding:9px 9px;}.navs{gap:4px;}.nav{font-size:9px;padding:2px 6px;}}
+  @media(max-width:600px){.hero-stats{gap:16px;}.sv{font-size:30px;}th,td{padding:9px 9px;}.navs{gap:4px;}.nav{font-size:9px;padding:2px 6px;}#map{height:340px;}}
 </style>
 </head>
 <body>
@@ -121,13 +152,65 @@
 </div>
 
 <div class="wrap">
+
+  <!-- ═══ MAP SECTION ═══ -->
+  <div class="sh"><h2>即時路線地圖</h2><span class="stag">Live Route Map</span></div>
+
+  <div id="map-section">
+    <div class="map-header">
+      <h3>🗺 SHS 1200K · Korea Full Route</h3>
+      <button id="locate-btn" onclick="startLocating()">
+        <span>📍</span> 定位我的位置
+      </button>
+    </div>
+    <div id="map"></div>
+    <div class="map-footer">
+      <div id="status-card">
+        <div class="status-grid">
+          <div class="status-item">
+            <div class="status-val" id="sv-dist" style="color:var(--accent)">—</div>
+            <div class="status-lbl">目前里程 km</div>
+          </div>
+          <div class="status-item">
+            <div class="status-val" id="sv-remain" style="color:var(--gold)">—</div>
+            <div class="status-lbl">剩餘距離 km</div>
+          </div>
+          <div class="status-item">
+            <div class="status-val" id="sv-next-dist" style="color:var(--blue)">—</div>
+            <div class="status-lbl">至下一CP km</div>
+          </div>
+          <div class="status-item">
+            <div class="status-val" id="sv-next-eta" style="color:var(--green)">—</div>
+            <div class="status-lbl">預計抵達時間</div>
+          </div>
+        </div>
+        <div id="next-cp-bar">
+          <div class="ncp-header">
+            <div>
+              <span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;">下一補給點</span>
+              <div class="ncp-name" id="ncp-name">—</div>
+            </div>
+            <div class="ncp-detail" id="ncp-detail">—</div>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);">
+            <span id="prev-cp-name">起點</span>
+            <span id="ncp-pct">0%</span>
+            <span id="ncp-name2">—</span>
+          </div>
+        </div>
+      </div>
+      <div id="gps-status">點擊「定位我的位置」以啟用 GPS 追蹤</div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
   <div class="sh"><h2>賽事行程表</h2><span class="stag">Race Schedule</span></div>
   <div class="info">
     <span class="ic">ℹ️</span>
     <span>
       配速假設：有效均速 <strong>20 km/h</strong>（平路 25 + 爬坡 12–15 折算）· 補給停留 <strong>10min</strong> · 午餐 <strong>30min</strong>。
-      住宿規則：住宿點 #1 &amp; #3 凌晨 <strong>03:00 出發</strong>；住宿點 #2（菀島）<strong>05:00 出發</strong>。
-      目標完賽 <strong>06/09 19:00（85h）</strong>，官方 90h 關門。
+      住宿規則：#1 &amp; #3 凌晨 <strong>03:00 出發</strong>；#2（菀島）<strong>05:00 出發</strong>。目標完賽 <strong>06/09 19:00（85h）</strong>。
     </span>
   </div>
 
@@ -137,249 +220,137 @@
         <tr><th>Day</th><th>距離</th><th>地點</th><th>預計抵達</th><th>出發時間</th><th>累計時數</th><th>性質</th><th>導航</th></tr>
       </thead>
       <tbody>
-
-        <!-- D1 START -->
         <tr class="rs">
-          <td><span class="day d1">D1</span></td>
-          <td><span class="dist dn">0 km</span></td>
+          <td><span class="day d1">D1</span></td><td><span class="dist dn">0 km</span></td>
           <td><div class="nz">🚩 起點 하남 미사리</div><div class="ne">Start · Hanam Misari</div></td>
-          <td><div class="tm">06/06 06:00</div></td>
-          <td><div class="tm" style="color:var(--accent)">06:00</div></td>
-          <td><div class="tm">0h</div></td>
-          <td><span class="tag tst">🚩 出發</span></td>
+          <td><div class="tm">06/06 06:00</div></td><td><div class="tm" style="color:var(--accent)">06:00</div></td>
+          <td><div class="tm">0h</div></td><td><span class="tag tst">🚩 出發</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/하남미사리경정공원" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=37.5451,127.1192" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=하남미사리" target="_blank">Kakao</a></div></td>
         </tr>
-
-        <tr>
-          <td><span class="day d1">D1</span></td>
-          <td><span class="dist dn">50 km</span></td>
+        <tr><td><span class="day d1">D1</span></td><td><span class="dist dn">50 km</span></td>
           <td><div class="nz">이천 (Icheon)</div><div class="ne">Icheon City</div></td>
-          <td><div class="tm">06/06 08:30</div></td>
-          <td><div class="ts">+10min → 08:40</div></td>
-          <td><div class="tm">2.7h</div></td>
-          <td><span class="tag ts2">補給</span></td>
+          <td><div class="tm">06/06 08:30</div></td><td><div class="ts">+10min → 08:40</div></td>
+          <td><div class="tm">2.7h</div></td><td><span class="tag ts2">補給</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/이천시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=37.27,127.44" target="_blank">Google</a></div></td>
         </tr>
-
-        <tr>
-          <td><span class="day d1">D1</span></td>
-          <td><span class="dist dn">100 km</span></td>
+        <tr><td><span class="day d1">D1</span></td><td><span class="dist dn">100 km</span></td>
           <td><div class="nz">음성 (Eumseong)</div><div class="ne">Eumseong County</div></td>
-          <td><div class="tm">06/06 11:10</div></td>
-          <td><div class="ts">+10min → 11:20</div></td>
-          <td><div class="tm">5.3h</div></td>
-          <td><span class="tag ts2">補給</span></td>
+          <td><div class="tm">06/06 11:10</div></td><td><div class="ts">+10min → 11:20</div></td>
+          <td><div class="tm">5.3h</div></td><td><span class="tag ts2">補給</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/음성군" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=37.193,127.746" target="_blank">Google</a></div></td>
         </tr>
-
-        <tr>
-          <td><span class="day d1">D1</span></td>
-          <td><span class="dist dn">160 km</span></td>
+        <tr><td><span class="day d1">D1</span></td><td><span class="dist dn">160 km</span></td>
           <td><div class="nz">청주 (Cheongju)</div><div class="ne">Cheongju City</div></td>
-          <td><div class="tm">06/06 14:20</div></td>
-          <td><div class="ts">+30min → 14:50</div></td>
-          <td><div class="tm">8.8h</div></td>
-          <td><span class="tag tl">🍱 午餐</span></td>
+          <td><div class="tm">06/06 14:20</div></td><td><div class="ts">+30min → 14:50</div></td>
+          <td><div class="tm">8.8h</div></td><td><span class="tag tl">🍱 午餐</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/청주시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=36.64,127.49" target="_blank">Google</a></div></td>
         </tr>
-
-        <tr>
-          <td><span class="day d1">D1</span></td>
-          <td><span class="dist dn">220 km</span></td>
+        <tr><td><span class="day d1">D1</span></td><td><span class="dist dn">220 km</span></td>
           <td><div class="nz">대전 (Daejeon)</div><div class="ne">Daejeon · CP1</div></td>
-          <td><div class="tm">06/06 17:50</div></td>
-          <td><div class="ts">+10min → 18:00</div></td>
-          <td><div class="tm">12.0h</div></td>
-          <td><span class="tag tc">📍 CP1</span></td>
+          <td><div class="tm">06/06 17:50</div></td><td><div class="ts">+10min → 18:00</div></td>
+          <td><div class="tm">12.0h</div></td><td><span class="tag tc">📍 CP1</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/대전시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=36.35,127.39" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=대전" target="_blank">Kakao</a></div></td>
         </tr>
-
-        <tr>
-          <td><span class="day d1">D1</span></td>
-          <td><span class="dist dn">280 km</span></td>
+        <tr><td><span class="day d1">D1</span></td><td><span class="dist dn">280 km</span></td>
           <td><div class="nz">논산 (Nonsan)</div><div class="ne">Nonsan City</div></td>
-          <td><div class="tm">06/06 21:00</div></td>
-          <td><div class="ts">+10min → 21:10</div></td>
-          <td><div class="tm">15.2h</div></td>
-          <td><span class="tag ts2">補給</span></td>
+          <td><div class="tm">06/06 21:00</div></td><td><div class="ts">+10min → 21:10</div></td>
+          <td><div class="tm">15.2h</div></td><td><span class="tag ts2">補給</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/논산시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=36.19,127.08" target="_blank">Google</a></div></td>
         </tr>
-
-        <!-- SLEEP 1 -->
-        <tr class="rsl">
-          <td><span class="day d1">D1→D2</span></td>
-          <td><span class="dist ds">340 km</span></td>
-          <td><div class="nz">🛏 익산 住宿點 #1</div><div class="ne">Iksan City · Sleep Stop #1</div><div class="hb">🏨 H大道飯店 · H Avenue Hotel</div></td>
+        <tr class="rsl"><td><span class="day d1">D1→D2</span></td><td><span class="dist ds">340 km</span></td>
+          <td><div class="nz">🛏 익산 住宿點 #1</div><div class="ne">Iksan · Sleep Stop #1</div><div class="hb">🏨 H大道飯店 · H Avenue Hotel</div></td>
           <td><div class="tm">06/07 00:10</div></td>
           <td><div class="tm" style="color:#a78bfa">03:00 出發<br><span class="ts" style="color:var(--muted)">睡眠約 2h50min</span></div></td>
-          <td><div class="tm" style="color:var(--purple)">21.0h</div></td>
-          <td><span class="tag tsl">🛏 住宿</span></td>
+          <td><div class="tm" style="color:var(--purple)">21.0h</div></td><td><span class="tag tsl">🛏 住宿</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/익산+H대로호텔" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=35.9482,126.9579" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=익산+H대로호텔" target="_blank">Kakao</a></div></td>
         </tr>
-
-        <!-- D2 -->
-        <tr>
-          <td><span class="day d2">D2</span></td>
-          <td><span class="dist dn">390 km</span></td>
+        <tr><td><span class="day d2">D2</span></td><td><span class="dist dn">390 km</span></td>
           <td><div class="nz">김제 (Gimje)</div><div class="ne">Gimje City</div></td>
-          <td><div class="tm">06/07 05:30</div></td>
-          <td><div class="ts">+30min → 06:00</div></td>
-          <td><div class="tm">24.0h</div></td>
-          <td><span class="tag tl">🍱 午餐</span></td>
+          <td><div class="tm">06/07 05:30</div></td><td><div class="ts">+30min → 06:00</div></td>
+          <td><div class="tm">24.0h</div></td><td><span class="tag tl">🍱 午餐</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/김제시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=35.80,126.89" target="_blank">Google</a></div></td>
         </tr>
-
-        <tr>
-          <td><span class="day d2">D2</span></td>
-          <td><span class="dist dn">450 km</span></td>
+        <tr><td><span class="day d2">D2</span></td><td><span class="dist dn">450 km</span></td>
           <td><div class="nz">광주 (Gwangju)</div><div class="ne">Gwangju · CP2</div></td>
-          <td><div class="tm">06/07 09:00</div></td>
-          <td><div class="ts">+10min → 09:10</div></td>
-          <td><div class="tm">27.2h</div></td>
-          <td><span class="tag tc">📍 CP2</span></td>
+          <td><div class="tm">06/07 09:00</div></td><td><div class="ts">+10min → 09:10</div></td>
+          <td><div class="tm">27.2h</div></td><td><span class="tag tc">📍 CP2</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/광주광역시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=35.16,126.85" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=광주" target="_blank">Kakao</a></div></td>
         </tr>
-
-        <tr>
-          <td><span class="day d2">D2</span></td>
-          <td><span class="dist dn">500 km</span></td>
+        <tr><td><span class="day d2">D2</span></td><td><span class="dist dn">500 km</span></td>
           <td><div class="nz">나주 (Naju)</div><div class="ne">Naju City</div></td>
-          <td><div class="tm">06/07 11:40</div></td>
-          <td><div class="ts">+10min → 11:50</div></td>
-          <td><div class="tm">29.8h</div></td>
-          <td><span class="tag ts2">補給</span></td>
+          <td><div class="tm">06/07 11:40</div></td><td><div class="ts">+10min → 11:50</div></td>
+          <td><div class="tm">29.8h</div></td><td><span class="tag ts2">補給</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/나주시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=34.98,126.71" target="_blank">Google</a></div></td>
         </tr>
-
-        <tr>
-          <td><span class="day d2">D2</span></td>
-          <td><span class="dist dn">560 km</span></td>
+        <tr><td><span class="day d2">D2</span></td><td><span class="dist dn">560 km</span></td>
           <td><div class="nz">목포 (Mokpo)</div><div class="ne">Mokpo · CP3</div></td>
-          <td><div class="tm">06/07 14:50</div></td>
-          <td><div class="ts">+30min → 15:20</div></td>
-          <td><div class="tm">33.3h</div></td>
-          <td><span class="tag tc">📍 CP3 🍱</span></td>
+          <td><div class="tm">06/07 14:50</div></td><td><div class="ts">+30min → 15:20</div></td>
+          <td><div class="tm">33.3h</div></td><td><span class="tag tc">📍 CP3 🍱</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/목포시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=34.81,126.39" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=목포" target="_blank">Kakao</a></div></td>
         </tr>
-
-        <!-- SLEEP 2 — 05:00 出發 -->
-        <tr class="rsl">
-          <td><span class="day d2">D2→D3</span></td>
-          <td><span class="dist ds">640 km</span></td>
+        <tr class="rsl"><td><span class="day d2">D2→D3</span></td><td><span class="dist ds">640 km</span></td>
           <td><div class="nz">🛏 완도 住宿點 #2</div><div class="ne">Wando County · Sleep Stop #2</div><div class="hb">🏨 菀島內西亞飯店 · Wando Nesia Hotel</div></td>
           <td><div class="tm">06/07 19:20</div></td>
-          <td>
-            <div class="tm" style="color:#a78bfa">05:00 出發</div>
-            <div class="ts" style="color:var(--muted)">睡眠約 9h40min ✓ 最充足</div>
-          </td>
-          <td><div class="tm" style="color:var(--purple)">47.0h</div></td>
-          <td><span class="tag tsl">🛏 住宿</span></td>
+          <td><div class="tm" style="color:#a78bfa">05:00 出發<br><span class="ts" style="color:var(--muted)">睡眠約 9h40min ✓</span></div></td>
+          <td><div class="tm" style="color:var(--purple)">47.0h</div></td><td><span class="tag tsl">🛏 住宿</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/완도+네시아호텔" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=34.3144,126.7547" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=완도+네시아호텔" target="_blank">Kakao</a></div></td>
         </tr>
-
-        <!-- D3 -->
-        <tr>
-          <td><span class="day d3">D3</span></td>
-          <td><span class="dist dn">700 km</span></td>
+        <tr><td><span class="day d3">D3</span></td><td><span class="dist dn">700 km</span></td>
           <td><div class="nz">보성 (Boseong)</div><div class="ne">Boseong · Tea Fields</div></td>
-          <td><div class="tm">06/08 08:00</div></td>
-          <td><div class="ts">+10min → 08:10</div></td>
-          <td><div class="tm">50.2h</div></td>
-          <td><span class="tag ts2">補給</span></td>
+          <td><div class="tm">06/08 08:00</div></td><td><div class="ts">+10min → 08:10</div></td>
+          <td><div class="tm">50.2h</div></td><td><span class="tag ts2">補給</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/보성군" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=34.77,127.08" target="_blank">Google</a></div></td>
         </tr>
-
-        <tr>
-          <td><span class="day d3">D3</span></td>
-          <td><span class="dist dn">760 km</span></td>
+        <tr><td><span class="day d3">D3</span></td><td><span class="dist dn">760 km</span></td>
           <td><div class="nz">순천 (Suncheon)</div><div class="ne">Suncheon City</div></td>
-          <td><div class="tm">06/08 11:10</div></td>
-          <td><div class="ts">+30min → 11:40</div></td>
-          <td><div class="tm">53.7h</div></td>
-          <td><span class="tag tl">🍱 午餐</span></td>
+          <td><div class="tm">06/08 11:10</div></td><td><div class="ts">+30min → 11:40</div></td>
+          <td><div class="tm">53.7h</div></td><td><span class="tag tl">🍱 午餐</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/순천시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=34.95,127.49" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=순천" target="_blank">Kakao</a></div></td>
         </tr>
-
-        <tr>
-          <td><span class="day d3">D3</span></td>
-          <td><span class="dist dn">820 km</span></td>
+        <tr><td><span class="day d3">D3</span></td><td><span class="dist dn">820 km</span></td>
           <td><div class="nz">남원 (Namwon)</div><div class="ne">Namwon · Jirisan Base</div></td>
-          <td><div class="tm">06/08 14:40</div></td>
-          <td><div class="ts">+10min → 14:50</div></td>
-          <td><div class="tm">56.8h</div></td>
-          <td><span class="tag ts2">補給</span></td>
+          <td><div class="tm">06/08 14:40</div></td><td><div class="ts">+10min → 14:50</div></td>
+          <td><div class="tm">56.8h</div></td><td><span class="tag ts2">補給</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/남원시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=35.41,127.39" target="_blank">Google</a></div></td>
         </tr>
-
-        <tr>
-          <td><span class="day d3">D3</span></td>
-          <td><span class="dist dn">880 km</span></td>
+        <tr><td><span class="day d3">D3</span></td><td><span class="dist dn">880 km</span></td>
           <td><div class="nz">전주 (Jeonju)</div><div class="ne">Jeonju · CP4</div></td>
-          <td><div class="tm">06/08 17:50</div></td>
-          <td><div class="ts">+10min → 18:00</div></td>
-          <td><div class="tm">60.0h</div></td>
-          <td><span class="tag tc">📍 CP4</span></td>
+          <td><div class="tm">06/08 17:50</div></td><td><div class="ts">+10min → 18:00</div></td>
+          <td><div class="tm">60.0h</div></td><td><span class="tag tc">📍 CP4</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/전주시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=35.82,127.15" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=전주" target="_blank">Kakao</a></div></td>
         </tr>
-
-        <!-- SLEEP 3 -->
-        <tr class="rsl">
-          <td><span class="day d3">D3→D4</span></td>
-          <td><span class="dist ds">940 km</span></td>
-          <td><div class="nz">🛏 익산 住宿點 #3</div><div class="ne">Iksan City · Sleep Stop #3</div><div class="hb">🏨 H大道飯店 · H Avenue Hotel</div></td>
+        <tr class="rsl"><td><span class="day d3">D3→D4</span></td><td><span class="dist ds">940 km</span></td>
+          <td><div class="nz">🛏 익산 住宿點 #3</div><div class="ne">Iksan · Sleep Stop #3</div><div class="hb">🏨 H大道飯店 · H Avenue Hotel</div></td>
           <td><div class="tm">06/08 21:00</div></td>
           <td><div class="tm" style="color:#a78bfa">03:00 出發<br><span class="ts" style="color:var(--muted)">睡眠約 6h</span></div></td>
-          <td><div class="tm" style="color:var(--purple)">69.0h</div></td>
-          <td><span class="tag tsl">🛏 住宿</span></td>
+          <td><div class="tm" style="color:var(--purple)">69.0h</div></td><td><span class="tag tsl">🛏 住宿</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/익산+H대로호텔" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=35.9482,126.9579" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=익산+H대로호텔" target="_blank">Kakao</a></div></td>
         </tr>
-
-        <!-- D4 -->
-        <tr>
-          <td><span class="day d4">D4</span></td>
-          <td><span class="dist dn">1000 km</span></td>
+        <tr><td><span class="day d4">D4</span></td><td><span class="dist dn">1000 km</span></td>
           <td><div class="nz">공주 (Gongju)</div><div class="ne">Gongju City</div></td>
-          <td><div class="tm">06/09 06:00</div></td>
-          <td><div class="ts">+30min → 06:30</div></td>
-          <td><div class="tm">72.5h</div></td>
-          <td><span class="tag tl">🍱 午餐</span></td>
+          <td><div class="tm">06/09 06:00</div></td><td><div class="ts">+30min → 06:30</div></td>
+          <td><div class="tm">72.5h</div></td><td><span class="tag tl">🍱 午餐</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/공주시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=36.45,127.12" target="_blank">Google</a></div></td>
         </tr>
-
-        <tr>
-          <td><span class="day d4">D4</span></td>
-          <td><span class="dist dn">1060 km</span></td>
+        <tr><td><span class="day d4">D4</span></td><td><span class="dist dn">1060 km</span></td>
           <td><div class="nz">천안 (Cheonan)</div><div class="ne">Cheonan City</div></td>
-          <td><div class="tm">06/09 09:30</div></td>
-          <td><div class="ts">+10min → 09:40</div></td>
-          <td><div class="tm">75.7h</div></td>
-          <td><span class="tag ts2">補給</span></td>
+          <td><div class="tm">06/09 09:30</div></td><td><div class="ts">+10min → 09:40</div></td>
+          <td><div class="tm">75.7h</div></td><td><span class="tag ts2">補給</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/천안시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=36.81,127.15" target="_blank">Google</a></div></td>
         </tr>
-
-        <tr>
-          <td><span class="day d4">D4</span></td>
-          <td><span class="dist dn">1120 km</span></td>
+        <tr><td><span class="day d4">D4</span></td><td><span class="dist dn">1120 km</span></td>
           <td><div class="nz">수원 (Suwon)</div><div class="ne">Suwon City</div></td>
-          <td><div class="tm">06/09 12:40</div></td>
-          <td><div class="ts">+10min → 12:50</div></td>
-          <td><div class="tm">78.8h</div></td>
-          <td><span class="tag ts2">補給</span></td>
+          <td><div class="tm">06/09 12:40</div></td><td><div class="ts">+10min → 12:50</div></td>
+          <td><div class="tm">78.8h</div></td><td><span class="tag ts2">補給</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/수원시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=37.26,127.00" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=수원" target="_blank">Kakao</a></div></td>
         </tr>
-
-        <!-- FINISH -->
-        <tr class="rf">
-          <td><span class="day d4">D4</span></td>
-          <td><span class="dist df">1199 km</span></td>
+        <tr class="rf"><td><span class="day d4">D4</span></td><td><span class="dist df">1199 km</span></td>
           <td><div class="nz">🏁 終點 하남 미사리</div><div class="ne">Finish · Hanam Misari</div></td>
           <td><div class="tm" style="color:var(--green)">06/09 19:00</div></td>
           <td><div class="ts" style="color:var(--green)">目標達成 ✓</div></td>
-          <td><div class="tm" style="color:var(--green)">85h 🏆</div></td>
-          <td><span class="tag tf">🏆 完賽</span></td>
+          <td><div class="tm" style="color:var(--green)">85h 🏆</div></td><td><span class="tag tf">🏆 完賽</span></td>
           <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/하남미사리경정공원" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=37.54568,127.12043" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=하남미사리" target="_blank">Kakao</a></div></td>
         </tr>
-
       </tbody>
     </table>
   </div>
@@ -396,7 +367,7 @@
     </div>
     <div class="bleg">
       <div class="leg"><div class="ld" style="background:var(--accent)"></div>騎行 ~60h（均速 20 km/h）</div>
-      <div class="leg"><div class="ld" style="background:var(--sleep)"></div>睡眠 ~18h（#1: 2h50min · #2: 9h40min · #3: 6h）</div>
+      <div class="leg"><div class="ld" style="background:var(--sleep)"></div>睡眠 ~18h（#1: 2h50m · #2: 9h40m · #3: 6h）</div>
       <div class="leg"><div class="ld" style="background:var(--gold)"></div>補給停留 ~4h</div>
       <div class="leg"><div class="ld" style="background:rgba(255,255,255,.1)"></div>官方90h關門餘裕 5h</div>
     </div>
@@ -407,43 +378,6 @@
       <div class="bni"><div class="bnv" style="color:var(--purple)">~18h</div><div class="bnl">Total Sleep</div></div>
       <div class="bni"><div class="bnv" style="color:var(--green)">85h</div><div class="bnl">目標完賽</div></div>
       <div class="bni"><div class="bnv" style="color:var(--muted)">+5h</div><div class="bnl">官方關門餘裕</div></div>
-    </div>
-  </div>
-
-  <!-- HOTELS -->
-  <div class="sh"><h2>住宿點資訊</h2><span class="stag">Sleep Stops</span></div>
-  <div class="tg" style="margin-bottom:40px">
-    <div class="tip" style="border-color:rgba(168,85,247,.35)">
-      <h3 style="color:#c4b5fd">🏨 住宿點 #1 &amp; #3 — H大道飯店</h3>
-      <p style="color:var(--text);margin-bottom:8px">益山市 (익산시) · H대로호텔</p>
-      <ul>
-        <li>#1 抵達：<strong>06/07 00:10</strong> → 睡眠約 <strong>2h50min</strong>（最短）</li>
-        <li>#3 抵達：<strong>06/08 21:00</strong> → 睡眠約 <strong>6h</strong></li>
-        <li>兩次均 <strong>03:00 出發</strong></li>
-        <li>同一飯店，需預訂兩個不同日期</li>
-        <li>告知前台需要 <strong>凌晨 3 點 Checkout</strong></li>
-      </ul>
-      <div class="navs" style="margin-top:12px">
-        <a class="nav nv" href="https://map.naver.com/v5/search/익산+H대로호텔" target="_blank">Naver</a>
-        <a class="nav gg" href="https://maps.google.com/?q=35.9482,126.9579" target="_blank">Google</a>
-        <a class="nav kk" href="https://map.kakao.com/?q=익산+H대로호텔" target="_blank">Kakao</a>
-      </div>
-    </div>
-    <div class="tip" style="border-color:rgba(168,85,247,.35)">
-      <h3 style="color:#c4b5fd">🏨 住宿點 #2 — 菀島內西亞飯店</h3>
-      <p style="color:var(--text);margin-bottom:8px">菀島郡 (완도군) · 완도 네시아호텔</p>
-      <ul>
-        <li>#2 抵達：<strong>06/07 19:20</strong> → 睡眠約 <strong>9h40min</strong> ✓ 最充足</li>
-        <li><strong>05:00 出發</strong>（比其他住宿點晚出發 2 小時）</li>
-        <li>菀島為半島地形，全程最南端住宿點</li>
-        <li>告知前台需要 <strong>凌晨 5 點 Checkout</strong></li>
-        <li>出發前確認 05:00 附近便利店或自備早餐</li>
-      </ul>
-      <div class="navs" style="margin-top:12px">
-        <a class="nav nv" href="https://map.naver.com/v5/search/완도+네시아호텔" target="_blank">Naver</a>
-        <a class="nav gg" href="https://maps.google.com/?q=34.3144,126.7547" target="_blank">Google</a>
-        <a class="nav kk" href="https://map.kakao.com/?q=완도+네시아호텔" target="_blank">Kakao</a>
-      </div>
     </div>
   </div>
 
@@ -501,5 +435,186 @@
     出發 2026/06/06 06:00 · 目標完賽 85h · 官方關門 90h
   </div>
 </footer>
+
+<script>
+// ══════════════════════════════════════════
+// ROUTE DATA (embedded from KML)
+// ══════════════════════════════════════════
+const ROUTE_COORDS = [[37.545104, 127.119165], [37.545886, 127.11999], [37.547162, 127.120464], [37.548421, 127.120905], [37.549684, 127.121357], [37.550975, 127.121846], [37.552258, 127.122328], [37.553531, 127.122835], [37.554736, 127.123543], [37.561398, 127.12761], [37.565017, 127.132281], [37.565772, 127.133626], [37.567019, 127.141898], [37.566897, 127.143591], [37.566776, 127.145249], [37.566692, 127.146944], [37.566781, 127.148578], [37.570558, 127.157778], [37.579273, 127.178929], [37.582958, 127.18929], [37.582645, 127.19712], [37.582002, 127.19854], [37.581096, 127.199663], [37.580206, 127.200941], [37.579268, 127.202067], [37.578234, 127.203156], [37.577202, 127.204239], [37.576168, 127.205331], [37.575134, 127.206421], [37.573984, 127.207291], [37.572831, 127.208173], [37.571688, 127.20907], [37.570564, 127.209928], [37.569372, 127.21072], [37.568179, 127.211512], [37.56696, 127.212116], [37.565712, 127.212646], [37.56443, 127.213159], [37.563169, 127.213663], [37.561885, 127.214176], [37.560603, 127.214692], [37.55932, 127.215211], [37.558073, 127.215714], [37.556788, 127.216217], [37.555499, 127.216719], [37.554244, 127.217229], [37.55301, 127.217757], [37.55176, 127.218239], [37.550447, 127.21856], [37.548917, 127.218544], [37.543408, 127.236713], [37.542454, 127.238448], [37.542783, 127.236806], [37.543461, 127.235345], [37.544536, 127.236064], [37.545516, 127.237229], [37.546449, 127.23838], [37.54736, 127.239631], [37.547242, 127.241026], [37.546406, 127.242155], [37.541886, 127.252278], [37.534163, 127.265641], [37.528538, 127.284658], [37.526278, 127.299068], [37.543668, 127.302538], [37.54927, 127.321478], [37.546549, 127.326587], [37.545877, 127.32806], [37.544888, 127.33075], [37.537108, 127.354998], [37.525918, 127.37218], [37.525068, 127.371831], [37.522753, 127.373775], [37.522595, 127.375184], [37.521599, 127.376064], [37.520513, 127.376961], [37.510748, 127.38269], [37.516038, 127.401059], [37.516945, 127.403227], [37.517563, 127.40623], [37.517006, 127.409351], [37.514328, 127.416998], [37.514711, 127.436325], [37.514255, 127.43784], [37.513453, 127.439152], [37.512731, 127.440521], [37.51025, 127.44413], [37.511289, 127.44731], [37.511276, 127.44923], [37.511021, 127.449961], [37.509793, 127.45097], [37.507825, 127.452055], [37.507023, 127.453292], [37.506368, 127.454742], [37.50538, 127.46108], [37.502925, 127.474124], [37.502422, 127.475259], [37.497831, 127.485477], [37.495511, 127.483429], [37.495406, 127.484606], [37.49017, 127.48776], [37.48559, 127.492509], [37.469689, 127.49796], [37.45132, 127.505959], [37.441626, 127.509892], [37.441494, 127.521008], [37.437649, 127.525759], [37.43225, 127.532609], [37.42568, 127.534679], [37.40638, 127.543439], [37.402125, 127.544969], [37.38846, 127.55137], [37.38033, 127.54941], [37.35581, 127.58253], [37.334739, 127.611029], [37.326243, 127.604856], [37.310939, 127.61381], [37.301085, 127.618081], [37.29914, 127.63248], [37.297635, 127.637551], [37.297142, 127.639038], [37.296608, 127.640534], [37.296083, 127.641672], [37.295386, 127.643033], [37.28704, 127.659979], [37.279044, 127.669632], [37.278014, 127.670509], [37.276918, 127.671437], [37.27137, 127.67945], [37.254489, 127.67582], [37.253449, 127.691328], [37.252209, 127.69185], [37.251324, 127.692965], [37.241771, 127.700743], [37.240859, 127.701948], [37.24384, 127.714949], [37.24619, 127.715789], [37.247335, 127.715966], [37.246833, 127.717414], [37.246037, 127.719284], [37.242642, 127.744516], [37.241226, 127.751773], [37.241333, 127.750301], [37.240305, 127.749371], [37.239028, 127.749075], [37.238135, 127.748167], [37.236841, 127.748138], [37.235518, 127.748014], [37.234185, 127.748094], [37.232865, 127.748049], [37.231545, 127.747966], [37.230202, 127.747919], [37.229337, 127.748982], [37.22837, 127.750068], [37.227196, 127.750853], [37.225944, 127.751415], [37.224641, 127.751738], [37.223312, 127.751863], [37.221976, 127.75184], [37.220634, 127.751691], [37.219391, 127.751301], [37.218134, 127.750721], [37.216897, 127.750158], [37.215629, 127.749585], [37.214389, 127.749023], [37.213122, 127.748448], [37.211891, 127.747899], [37.210619, 127.747343], [37.209367, 127.746946], [37.208092, 127.746933], [37.206812, 127.747168], [37.171249, 127.75472], [37.164409, 127.75948], [37.154009, 127.770919], [37.12547, 127.79611], [37.112459, 127.80692], [37.10134, 127.815599], [37.09344, 127.807319], [37.08818, 127.804], [37.078249, 127.82619], [37.07775, 127.84062], [37.07114, 127.865489], [37.047837, 127.866933], [37.03203, 127.854671], [37.01686, 127.86466], [37.00343, 127.87406], [36.99557, 127.87926], [36.990236, 127.885856], [36.987555, 127.885661], [36.97483, 127.88522], [36.96151, 127.88197], [36.94847, 127.88781], [36.944185, 127.875848], [36.94234, 127.86905], [36.93639, 127.86056], [36.92714, 127.85714], [36.92423, 127.85952], [36.917738, 127.861059], [36.916411, 127.86078], [36.914427, 127.8626], [36.914118, 127.864216], [36.913141, 127.866276], [36.90425, 127.86752], [36.90468, 127.86196], [36.89727, 127.85832], [36.88906, 127.84655], [36.870162, 127.854401], [36.86701, 127.86478], [36.84364, 127.88222], [36.83696, 127.86178], [36.8299, 127.84604], [36.81841, 127.82662], [36.809824, 127.810791], [36.80729, 127.80791], [36.809676, 127.793158], [36.808559, 127.79258], [36.807334, 127.791942], [36.80302, 127.79115], [36.78561, 127.78817], [36.767461, 127.794962], [36.76418, 127.79754], [36.75524, 127.81445], [36.744084, 127.812385], [36.73339, 127.80992], [36.71108, 127.80521], [36.70073, 127.80825], [36.68854, 127.79766], [36.68552, 127.77734], [36.67541, 127.75857], [36.66467, 127.74356], [36.658937, 127.73802], [36.657801, 127.737116], [36.6518, 127.72971], [36.64246, 127.72459], [36.62987, 127.72451], [36.62112, 127.72505], [36.61331, 127.72443], [36.60265, 127.72377], [36.59004, 127.72885], [36.573651, 127.729128], [36.57232, 127.728913], [36.570261, 127.725747], [36.56938, 127.724862], [36.56654, 127.72393], [36.552896, 127.732392], [36.551956, 127.733273], [36.551025, 127.732192], [36.550448, 127.730823], [36.54457, 127.72648], [36.536283, 127.716226], [36.52873, 127.72209], [36.500191, 127.716818], [36.498923, 127.717385], [36.497651, 127.717507], [36.496329, 127.717452], [36.494982, 127.717482], [36.489227, 127.717697], [36.48788, 127.71774], [36.486533, 127.717783], [36.485225, 127.717839], [36.483879, 127.717898], [36.482668, 127.718309], [36.482256, 127.717099], [36.481802, 127.715619], [36.481153, 127.714195], [36.480687, 127.712674], [36.480303, 127.711139], [36.47993, 127.709571], [36.479563, 127.708007], [36.479184, 127.706491], [36.478634, 127.705167], [36.47562, 127.70315], [36.46458, 127.70418], [36.45492, 127.69809], [36.44019, 127.69861], [36.43467, 127.69168], [36.42684, 127.68195], [36.41962, 127.67251], [36.40807, 127.66948], [36.395127, 127.668318], [36.394806, 127.666728], [36.394516, 127.665097], [36.3939, 127.66015], [36.379309, 127.6509], [36.378209, 127.650362], [36.376957, 127.649929], [36.375794, 127.649105], [36.374681, 127.648186], [36.373634, 127.647174], [36.372579, 127.646219], [36.371489, 127.645234], [36.3704, 127.644249], [36.369406, 127.643192], [36.368689, 127.641841], [36.368451, 127.640225], [36.368619, 127.638617], [36.37295, 127.62701], [36.374328, 127.626199], [36.374757, 127.624707], [36.374822, 127.623098], [36.372129, 127.617936], [36.371335, 127.616682], [36.369049, 127.61474], [36.3656, 127.60846], [36.35607, 127.59396], [36.34459, 127.58993], [36.33198, 127.58797], [36.323413, 127.586286], [36.32235, 127.58543], [36.32154, 127.58412], [36.320698, 127.582882], [36.319739, 127.582316], [36.318656, 127.583101], [36.317418, 127.582883], [36.316233, 127.583515], [36.315581, 127.582921], [36.31353, 127.575], [36.30676, 127.55429], [36.29988, 127.53859], [36.28697, 127.52781], [36.27608, 127.52859], [36.25397, 127.5114], [36.24397, 127.51024], [36.2278, 127.50521], [36.226038, 127.503465], [36.224973, 127.502592], [36.224332, 127.502418], [36.22319, 127.503305], [36.222048, 127.504191], [36.21401, 127.49496], [36.20845, 127.486979], [36.208191, 127.485783], [36.207158, 127.484727], [36.206133, 127.483674], [36.205121, 127.482627], [36.204076, 127.48173], [36.199278, 127.478414], [36.198145, 127.4776], [36.193494, 127.475934], [36.192459, 127.474865], [36.18791, 127.46032], [36.17323, 127.43305], [36.16253, 127.40709], [36.16117, 127.39725], [36.159436, 127.397329], [36.153607, 127.385707], [36.15316, 127.384152], [36.152252, 127.383138], [36.151318, 127.382238], [36.150739, 127.380753], [36.149826, 127.379605], [36.14928, 127.37042], [36.15547, 127.3589], [36.16537, 127.34514], [36.16209, 127.32455], [36.16559, 127.30424], [36.16036, 127.2829], [36.15987, 127.26862], [36.16085, 127.26806], [36.15788, 127.26656], [36.1477, 127.25089], [36.13689, 127.23553], [36.12729, 127.22119], [36.11958, 127.19292], [36.13153, 127.17914], [36.13524, 127.16388], [36.131658, 127.146281], [36.124543, 127.130921], [36.11895, 127.12255], [36.128616, 127.103262], [36.129356, 127.101919], [36.130054, 127.100511], [36.129761, 127.09986], [36.128432, 127.099738], [36.127294, 127.098895], [36.125978, 127.098643], [36.124685, 127.098372], [36.123429, 127.097937], [36.122177, 127.098283], [36.104656, 127.097701], [36.100009, 127.093307], [36.09169, 127.09103], [36.075819, 127.08971], [36.07459, 127.089068], [36.073526, 127.087668], [36.065637, 127.082589], [36.064534, 127.081669], [36.063577, 127.080497], [36.062628, 127.079313], [36.061893, 127.077965], [36.064345, 127.069062], [36.063462, 127.0679], [36.05989, 127.06048], [36.04332, 127.04491], [36.04566, 127.01876], [36.04144, 127.01472], [36.0298, 127.00828], [36.024655, 126.991257], [36.023737, 126.990089], [36.023207, 126.986664], [36.022098, 126.982913], [36.021961, 126.981392], [36.022153, 126.980104], [36.022791, 126.97876], [36.027042, 126.961916], [36.02244, 126.95666], [36.009666, 126.949405], [36.008957, 126.948166], [36.00862, 126.946641], [36.008013, 126.94533], [36.006887, 126.944501], [36.004766, 126.944456], [36.003552, 126.9443], [36.002214, 126.944495], [36.000906, 126.944635], [35.999166, 126.945143], [35.998294, 126.946396], [35.997462, 126.947691], [35.996437, 126.948483], [35.995198, 126.948871], [35.993116, 126.949751], [35.991836, 126.950827], [35.990875, 126.95194], [35.989875, 126.95299], [35.988756, 126.953825], [35.96341, 126.95354], [35.931129, 126.949854], [35.929857, 126.949308], [35.929217, 126.950353], [35.928623, 126.951536], [35.927296, 126.951331], [35.925987, 126.951179], [35.924659, 126.9509], [35.923331, 126.95062], [35.922021, 126.950549], [35.920767, 126.95043], [35.91957, 126.949811], [35.918236, 126.949571], [35.916377, 126.949272], [35.915194, 126.94854], [35.914047, 126.947667], [35.913983, 126.946149], [35.914135, 126.944496], [35.914288, 126.942843], [35.914368, 126.941228], [35.914377, 126.939608], [35.914287, 126.937995], [35.914264, 126.936357], [35.914105, 126.934723], [35.913852, 126.933088], [35.913368, 126.931435], [35.913613, 126.931728], [35.907515, 126.933839], [35.906173, 126.933989], [35.904831, 126.934139], [35.903489, 126.934289], [35.902147, 126.934439], [35.900805, 126.934589], [35.898013, 126.934782], [35.88879, 126.94223], [35.878399, 126.947559], [35.877913, 126.949225], [35.876964, 126.950276], [35.875835, 126.951051], [35.874628, 126.951739], [35.87334, 126.9521], [35.872023, 126.95234], [35.870688, 126.952448], [35.869359, 126.952172], [35.868069, 126.951982], [35.866538, 126.952278], [35.865207, 126.952453], [35.864043, 126.953012], [35.862779, 126.953514], [35.861521, 126.953378], [35.86036, 126.952791], [35.85909, 126.952332], [35.858031, 126.953075], [35.857024, 126.954085], [35.85578, 126.954725], [35.854621, 126.955473], [35.853665, 126.956261], [35.852585, 126.957058], [35.850818, 126.958288], [35.848021, 126.958978], [35.84287, 126.96277], [35.82582, 126.97516], [35.797747, 126.974402], [35.792232, 126.939476], [35.765404, 126.909948], [35.746107, 126.907294], [35.734835, 126.90238], [35.735406, 126.900172], [35.732982, 126.897994], [35.730508, 126.896986], [35.728383, 126.895666], [35.715543, 126.891936], [35.697269, 126.883966], [35.691296, 126.882468], [35.690621, 126.883691], [35.689486, 126.88447], [35.688242, 126.885109], [35.687031, 126.885725], [35.685784, 126.886354], [35.684552, 126.886988], [35.658353, 126.885308], [35.639588, 126.876214], [35.633571, 126.87262], [35.632514, 126.871849], [35.626049, 126.870929], [35.618601, 126.868864], [35.612243, 126.868302], [35.597412, 126.867116], [35.596412, 126.866047], [35.595561, 126.864763], [35.592013, 126.866664], [35.591162, 126.865379], [35.590374, 126.864056], [35.589835, 126.862573], [35.575068, 126.844088], [35.569636, 126.849161], [35.568563, 126.850272], [35.567532, 126.851338], [35.56671, 126.852614], [35.566002, 126.854015], [35.565339, 126.855457], [35.564676, 126.856899], [35.564016, 126.858335], [35.56226, 126.858729], [35.561174, 126.857804], [35.560072, 126.856851], [35.55897, 126.855898], [35.558247, 126.854862], [35.558845, 126.853378], [35.559442, 126.851893], [35.557022, 126.842813], [35.556282, 126.841514], [35.550817, 126.836093], [35.54712, 126.82614], [35.51251, 126.79556], [35.48403, 126.7837], [35.4749, 126.7857], [35.465862, 126.789993], [35.466045, 126.791254], [35.46201, 126.79513], [35.464933, 126.798672], [35.44163, 126.81609], [35.42457, 126.80589], [35.3974, 126.80823], [35.37516, 126.80444], [35.35426, 126.77866], [35.350257, 126.774267], [35.32376, 126.781474], [35.322692, 126.780486], [35.3209, 126.77897], [35.300634, 126.780507], [35.29863, 126.780185], [35.297355, 126.779957], [35.29605, 126.779907], [35.294718, 126.779924], [35.293382, 126.780013], [35.290588, 126.77056], [35.27143, 126.75583], [35.252135, 126.743929], [35.250853, 126.74342], [35.249571, 126.742911], [35.248311, 126.742342], [35.247097, 126.741701], [35.245899, 126.740947], [35.225202, 126.735882], [35.22251, 126.736887], [35.221424, 126.737712], [35.215207, 126.746648], [35.199378, 126.753848], [35.183612, 126.733199], [35.170926, 126.701897], [35.17005, 126.699978], [35.16882, 126.693793], [35.168237, 126.692317], [35.167701, 126.690805], [35.162699, 126.68724], [35.162056, 126.685864], [35.16183, 126.684116], [35.163527, 126.674779], [35.16292, 126.673806], [35.158869, 126.671838], [35.157584, 126.671967], [35.15638, 126.672577], [35.15524, 126.673353], [35.154058, 126.674053], [35.152807, 126.674544], [35.151509, 126.674567], [35.150605, 126.67391], [35.150636, 126.672263], [35.14975, 126.656709], [35.140869, 126.633609], [35.121029, 126.622179], [35.11843, 126.63236], [35.119899, 126.64292], [35.118874, 126.643939], [35.117788, 126.644896], [35.116683, 126.645729], [35.10385, 126.65662], [35.08855, 126.65005], [35.0608, 126.64559], [35.04314, 126.64595], [35.02052, 126.63973], [35.00785, 126.6385], [35.004292, 126.636172], [35.002753, 126.635527], [34.9908, 126.63313], [34.964143, 126.635709], [34.962534, 126.629529], [34.962514, 126.615768], [34.945075, 126.608322], [34.944065, 126.60925], [34.942905, 126.609362], [34.942574, 126.608469], [34.942659, 126.606907], [34.942609, 126.605264], [34.942374, 126.604059], [34.92897, 126.603379], [34.909449, 126.5918], [34.894716, 126.59205], [34.872752, 126.605325], [34.869721, 126.608077], [34.869209, 126.609269], [34.868136, 126.609214], [34.866874, 126.609016], [34.865603, 126.608969], [34.863862, 126.609663], [34.858558, 126.606727], [34.839887, 126.596117], [34.824254, 126.57823], [34.809756, 126.564956], [34.806011, 126.575641], [34.804844, 126.576039], [34.80364, 126.576657], [34.801163, 126.57706], [34.797084, 126.581515], [34.785569, 126.571486], [34.756074, 126.581219], [34.745848, 126.584984], [34.729268, 126.582506], [34.727495, 126.581729], [34.726129, 126.578099], [34.726134, 126.576513], [34.725896, 126.574334], [34.726013, 126.572705], [34.725911, 126.571086], [34.725668, 126.569628], [34.724087, 126.569222], [34.720832, 126.566131], [34.714545, 126.561564], [34.69837, 126.567889], [34.682295, 126.56417], [34.680602, 126.564942], [34.657698, 126.559676], [34.63654, 126.549637], [34.635805, 126.550713], [34.632628, 126.553629], [34.62767, 126.548603], [34.613024, 126.53351], [34.586259, 126.49435], [34.57401, 126.46144], [34.5629, 126.45705], [34.55447, 126.45534], [34.54206, 126.463769], [34.522085, 126.461814], [34.4943, 126.48318], [34.490282, 126.499394], [34.490261, 126.501028], [34.493746, 126.509866], [34.488239, 126.51385], [34.472172, 126.50048], [34.453174, 126.507203], [34.447233, 126.506175], [34.429642, 126.517997], [34.41092, 126.514354], [34.359659, 126.521939], [34.343965, 126.523464], [34.332709, 126.529798], [34.323833, 126.524277], [34.323248, 126.522859], [34.322231, 126.521878], [34.321181, 126.520871], [34.316791, 126.517559], [34.312286, 126.523456], [34.311342, 126.524084], [34.310133, 126.523505], [34.305756, 126.524389], [34.30452, 126.525032], [34.304328, 126.526504], [34.303201, 126.527018], [34.302188, 126.527892], [34.300998, 126.528453], [34.300785, 126.527397], [34.300028, 126.52731], [34.299237, 126.527903], [34.299994, 126.528489], [34.301036, 126.529167], [34.302323, 126.529212], [34.303573, 126.529401], [34.304581, 126.52909], [34.30407, 126.53081], [34.30392, 126.53999], [34.31054, 126.54836], [34.31977, 126.55492], [34.32238, 126.57493], [34.31704, 126.59023], [34.31784, 126.59965], [34.33046, 126.59829], [34.34269, 126.59599], [34.35186, 126.60425], [34.35973, 126.60883], [34.37148, 126.61204], [34.37999, 126.60977], [34.39615, 126.61602], [34.40653, 126.62232], [34.405847, 126.623632], [34.404965, 126.624809], [34.40399, 126.625937], [34.403022, 126.627055], [34.402025, 126.628154], [34.401028, 126.629252], [34.39873, 126.63868], [34.393521, 126.648976], [34.393089, 126.650523], [34.39237, 126.65167], [34.39183, 126.650711], [34.392607, 126.649391], [34.37829, 126.64592], [34.3621, 126.643894], [34.35711, 126.64407], [34.34422, 126.64825], [34.32991, 126.65672], [34.32467, 126.66555], [34.32407, 126.67107], [34.31562, 126.67716], [34.30485, 126.69943], [34.3023, 126.71526], [34.30521, 126.73441], [34.30695, 126.74315], [34.31866, 126.74307], [34.330798, 126.73428], [34.33383, 126.76065], [34.33417, 126.77435], [34.335276, 126.780919], [34.33578, 126.782398], [34.336204, 126.78391], [34.336583, 126.785476], [34.33698, 126.787013], [34.337603, 126.788418], [34.338344, 126.789781], [34.339025, 126.79114], [34.338937, 126.792602], [34.339991, 126.79195], [34.340865, 126.790708], [34.341767, 126.789536], [34.35735, 126.77422], [34.37168, 126.78093], [34.374701, 126.780751], [34.38288, 126.79253], [34.39616, 126.79967], [34.411422, 126.805563], [34.412476, 126.806454], [34.42185, 126.81535], [34.43732, 126.82548], [34.450185, 126.828244], [34.4512, 126.827441], [34.45952, 126.83279], [34.45618, 126.83898], [34.45577, 126.84512], [34.46079, 126.85004], [34.46237, 126.86708], [34.46974, 126.8805], [34.475571, 126.881347], [34.476915, 126.881228], [34.49333, 126.89398], [34.495196, 126.897214], [34.495973, 126.898549], [34.496626, 126.899881], [34.49141, 126.91127], [34.48865, 126.92559], [34.48501, 126.93926], [34.483338, 126.942503], [34.483536, 126.943954], [34.483793, 126.945399], [34.484707, 126.946463], [34.485395, 126.947805], [34.4953, 126.95304], [34.50709, 126.96567], [34.511623, 126.970553], [34.512458, 126.97174], [34.512965, 126.972789], [34.54021, 126.98619], [34.545134, 126.988421], [34.544996, 126.986956], [34.55366, 126.9897], [34.55935, 126.97703], [34.55979, 126.95762], [34.56414, 126.93039], [34.56415, 126.90819], [34.565, 126.89303], [34.56966, 126.88344], [34.56892, 126.88109], [34.5664, 126.87601], [34.56442, 126.86318], [34.557723, 126.84813], [34.56486, 126.83828], [34.56986, 126.81479], [34.58621, 126.7937], [34.61324, 126.79075], [34.620852, 126.793173], [34.62167, 126.794453], [34.62248, 126.795599], [34.623743, 126.796035], [34.624816, 126.795339], [34.625674, 126.794134], [34.64009, 126.77757], [34.63191, 126.75995], [34.60948, 126.73804], [34.58928, 126.72633], [34.5775, 126.71211], [34.57348, 126.689064], [34.573848, 126.687646], [34.57363, 126.6833], [34.571362, 126.674181], [34.56949, 126.66145], [34.56586, 126.6389], [34.56725, 126.63298], [34.57031, 126.62032], [34.57094, 126.60727], [34.579774, 126.582512], [34.58418, 126.56342], [34.59435, 126.55881], [34.6013, 126.56731], [34.61793, 126.57037], [34.62424, 126.55761], [34.631839, 126.554383], [34.63368, 126.552532], [34.636133, 126.550242], [34.637552, 126.549532], [34.67136, 126.55793], [34.681306, 126.565001], [34.688379, 126.56778], [34.707569, 126.562981], [34.715016, 126.561729], [34.722929, 126.568218], [34.7239, 126.569246], [34.725188, 126.569082], [34.725773, 126.570146], [34.725952, 126.571431], [34.726008, 126.573022], [34.725658, 126.575723], [34.725177, 126.577255], [34.725457, 126.578488], [34.727403, 126.582141], [34.730902, 126.585297], [34.755276, 126.581531], [34.763968, 126.574805], [34.767408, 126.573038], [34.768635, 126.573716], [34.769844, 126.57435], [34.774475, 126.576176], [34.788359, 126.573103], [34.799034, 126.581435], [34.801343, 126.577046], [34.803774, 126.576511], [34.805005, 126.575992], [34.806839, 126.574099], [34.812263, 126.567825], [34.835126, 126.594503], [34.845182, 126.598421], [34.862435, 126.610064], [34.863686, 126.609816], [34.864978, 126.60935], [34.86657, 126.609111], [34.867902, 126.60923], [34.869046, 126.609428], [34.869826, 126.60837], [34.87963, 126.601224], [34.897181, 126.593185], [34.913577, 126.593716], [34.942596, 126.60658], [34.942601, 126.608193], [34.942631, 126.609254], [34.943841, 126.609401], [34.944832, 126.60842], [34.962912, 126.616375], [34.964918, 126.626256], [34.962631, 126.629414], [34.963197, 126.635764], [34.99043, 126.63208], [35.00163, 126.63595], [35.01737, 126.63658], [35.03764, 126.64461], [35.05705, 126.64408], [35.08498, 126.64872], [35.088741, 126.650246], [35.089925, 126.650779], [35.09714, 126.65439], [35.116111, 126.64597], [35.117311, 126.645353], [35.12063, 126.64037], [35.1178, 126.62942], [35.128805, 126.622308], [35.1436, 126.64238], [35.150183, 126.664624], [35.150625, 126.672812], [35.15062, 126.674409], [35.151954, 126.674646], [35.153252, 126.674476], [35.154468, 126.673828], [35.155638, 126.6731], [35.156765, 126.672292], [35.157991, 126.671878], [35.159315, 126.671898], [35.163384, 126.675045], [35.161765, 126.68465], [35.16222, 126.686409], [35.165975, 126.690287], [35.16813, 126.692015], [35.16868, 126.693511], [35.170053, 126.699648], [35.170626, 126.700948], [35.179809, 126.725843], [35.195639, 126.75065], [35.214263, 126.747645], [35.215288, 126.746697], [35.2212, 126.73802], [35.225087, 126.735919], [35.245779, 126.740871], [35.246977, 126.741626], [35.248186, 126.74228], [35.249443, 126.74286], [35.250725, 126.743369], [35.252007, 126.743878], [35.27097, 126.75567], [35.289722, 126.770091], [35.292176, 126.780333], [35.300368, 126.780599], [35.321736, 126.779571], [35.322798, 126.780588], [35.323868, 126.781572], [35.350338, 126.774398], [35.35533, 126.78034], [35.38214, 126.8025], [35.39862, 126.80795], [35.42622, 126.80784], [35.4436, 126.81592], [35.465036, 126.798574], [35.4617, 126.79385], [35.466203, 126.791012], [35.465945, 126.789687], [35.47675, 126.78448], [35.4873, 126.78396], [35.52139, 126.80533], [35.549877, 126.834629], [35.5541, 126.83809], [35.559203, 126.852487], [35.558606, 126.853971], [35.558308, 126.855326], [35.55941, 126.856279], [35.560513, 126.857232], [35.561615, 126.858185], [35.562705, 126.859102], [35.56628, 126.85347], [35.569967, 126.848841], [35.571003, 126.847797], [35.572035, 126.846732], [35.573138, 126.845845], [35.574277, 126.844961], [35.575286, 126.843906], [35.589783, 126.862611], [35.590273, 126.864139], [35.591027, 126.865441], [35.591861, 126.866698], [35.592706, 126.867983], [35.593536, 126.86923], [35.598564, 126.866017], [35.61346, 126.868591], [35.618644, 126.868845], [35.626766, 126.871025], [35.632952, 126.872023], [35.633936, 126.87303], [35.647453, 126.876213], [35.669679, 126.888841], [35.684995, 126.886753], [35.686242, 126.886123], [35.687488, 126.885494], [35.688698, 126.884875], [35.689942, 126.884236], [35.691022, 126.883709], [35.696879, 126.883839], [35.710092, 126.890294], [35.726253, 126.895856], [35.729865, 126.89649], [35.731425, 126.89866], [35.735243, 126.899306], [35.734489, 126.902598], [35.754162, 126.907874], [35.778182, 126.914964], [35.797199, 126.948209], [35.81489, 126.98266], [35.83082, 126.96894], [35.846445, 126.959765], [35.852419, 126.957143], [35.853546, 126.956374], [35.854502, 126.955552], [35.855656, 126.954789], [35.856899, 126.954149], [35.857913, 126.953156], [35.859001, 126.952368], [35.86024, 126.952715], [35.861423, 126.953263], [35.862644, 126.953524], [35.863912, 126.953052], [35.865093, 126.952463], [35.866405, 126.952307], [35.867725, 126.952061], [35.870252, 126.952458], [35.873208, 126.952135], [35.874525, 126.951784], [35.875705, 126.951097], [35.876849, 126.95034], [35.877839, 126.949365], [35.878405, 126.947883], [35.88772, 126.94294], [35.897822, 126.935096], [35.899164, 126.934768], [35.900492, 126.934624], [35.901834, 126.934474], [35.903176, 126.934324], [35.904518, 126.934174], [35.90586, 126.934024], [35.907202, 126.933874], [35.908544, 126.933724], [35.913869, 126.933197], [35.914122, 126.934832], [35.914274, 126.936468], [35.914281, 126.938105], [35.914388, 126.939718], [35.914365, 126.941339], [35.914278, 126.942953], [35.914125, 126.944606], [35.913972, 126.946259], [35.914123, 126.947725], [35.91527, 126.948598], [35.916461, 126.949308], [35.918325, 126.949587], [35.919659, 126.949827], [35.920846, 126.950481], [35.922111, 126.950546], [35.923419, 126.950638], [35.924748, 126.950918], [35.926044, 126.951191], [35.927386, 126.951341], [35.92871, 126.951563], [35.929248, 126.950249], [35.929941, 126.949344], [35.931214, 126.94989], [35.932487, 126.950436], [35.93376, 126.950982], [35.93925, 126.953294], [35.940488, 126.953814], [35.941767, 126.954338], [35.943046, 126.954861], [35.944325, 126.955384], [35.945604, 126.955908], [35.946884, 126.956431], [35.948121, 126.956937], [35.949399, 126.957466], [35.950676, 126.957994], [35.951954, 126.958523], [35.953232, 126.959052], [35.95451, 126.95958], [35.955787, 126.960109], [35.957058, 126.96063], [35.958338, 126.96115], [35.959618, 126.961669], [35.960899, 126.962189], [35.962179, 126.962708], [35.963459, 126.963228], [35.964739, 126.963747], [35.966014, 126.964264], [35.967297, 126.964776], [35.968579, 126.965287], [35.969861, 126.965799], [35.971046, 126.965188], [35.971946, 126.964019], [35.972827, 126.962759], [35.974006, 126.962084], [35.975116, 126.961241], [35.976027, 126.960025], [35.976934, 126.958795], [35.977885, 126.957684], [35.979141, 126.957959], [35.980385, 126.95833], [35.981019, 126.957306], [35.98201, 126.956484], [35.983274, 126.95603], [35.984569, 126.955571], [35.985852, 126.955092], [35.987138, 126.954591], [35.988839, 126.95451], [35.989987, 126.953476], [35.990745, 126.952209], [35.991678, 126.951024], [35.992909, 126.949859], [35.994046, 126.949581], [35.995064, 126.94889], [35.996315, 126.948554], [35.997382, 126.947824], [35.9982, 126.946515], [35.999093, 126.945283], [36.000771, 126.944649], [36.002114, 126.944508], [36.003418, 126.94432], [36.004653, 126.944365], [36.005857, 126.944747], [36.007049, 126.94444], [36.00798, 126.945504], [36.00865, 126.946832], [36.008948, 126.948434], [36.02099, 126.95564], [36.02237, 126.97978], [36.023355, 126.989308], [36.024167, 126.990574], [36.02553, 126.99874], [36.03389, 127.0117], [36.05081, 127.01986], [36.07598, 127.03106], [36.09261, 127.01906], [36.101217, 127.017444], [36.11705, 127.01872], [36.121563, 127.021621], [36.122803, 127.021875], [36.124064, 127.022298], [36.125336, 127.02285], [36.126601, 127.023392], [36.127891, 127.023709], [36.128835, 127.022842], [36.130265, 127.02144], [36.131563, 127.021297], [36.132907, 127.021175], [36.134248, 127.021058], [36.135592, 127.020946], [36.136918, 127.020753], [36.137964, 127.019796], [36.139149, 127.019113], [36.140398, 127.018886], [36.141684, 127.019143], [36.142841, 127.018643], [36.144003, 127.017797], [36.145138, 127.016957], [36.146289, 127.01609], [36.147468, 127.015337], [36.148551, 127.014483], [36.149577, 127.013401], [36.151809, 127.012235], [36.15957, 127.01726], [36.18065, 127.01749], [36.19278, 127.007837], [36.193063, 127.006254], [36.193313, 127.00465], [36.194216, 127.003616], [36.19729, 127.00397], [36.21969, 126.99974], [36.24643, 126.99469], [36.257591, 127.006963], [36.26978, 127.01894], [36.28378, 127.03532], [36.29588, 127.03712], [36.30537, 127.04124], [36.31577, 127.04685], [36.32912, 127.04234], [36.332931, 127.045729], [36.334019, 127.046628], [36.335254, 127.046697], [36.337246, 127.047169], [36.338443, 127.047819], [36.339661, 127.048473], [36.340916, 127.049075], [36.342176, 127.049671], [36.34339, 127.050317], [36.344627, 127.050893], [36.345905, 127.051426], [36.347169, 127.051954], [36.348437, 127.052521], [36.35328, 127.0546], [36.36461, 127.06442], [36.381502, 127.075943], [36.39311, 127.08047], [36.40534, 127.09339], [36.42285, 127.10336], [36.441372, 127.119254], [36.444584, 127.120371], [36.463364, 127.123251], [36.464865, 127.123389], [36.466266, 127.124155], [36.467363, 127.125063], [36.468464, 127.12597], [36.469552, 127.126851], [36.470084, 127.127934], [36.469296, 127.129292], [36.468503, 127.130647], [36.467608, 127.131829], [36.46187, 127.14199], [36.45477, 127.15754], [36.4477, 127.18535], [36.43851, 127.20581], [36.440246, 127.22382], [36.441452, 127.224496], [36.442771, 127.224837], [36.444083, 127.224805], [36.445404, 127.22482], [36.446707, 127.224879], [36.44804, 127.225119], [36.449344, 127.22552], [36.450604, 127.226001], [36.451799, 127.226773], [36.452964, 127.227582], [36.454084, 127.228515], [36.455173, 127.229472], [36.456194, 127.230566], [36.457175, 127.231701], [36.458139, 127.232872], [36.459064, 127.234025], [36.459912, 127.235327], [36.460726, 127.236593], [36.461376, 127.23806], [36.462027, 127.239528], [36.462677, 127.240995], [36.462817, 127.242149], [36.46489, 127.25271], [36.47771, 127.26235], [36.48229, 127.2712], [36.49159, 127.28976], [36.51031, 127.30432], [36.51757, 127.31982], [36.52255, 127.3182], [36.53035, 127.30198], [36.531356, 127.297541], [36.532325, 127.296574], [36.533442, 127.295744], [36.54235, 127.29536], [36.55896, 127.29759], [36.57593, 127.30026], [36.58026, 127.300036], [36.5819, 127.30038], [36.58606, 127.32264], [36.60359, 127.34051], [36.62244, 127.34961], [36.63898, 127.35853], [36.67177, 127.3923], [36.681204, 127.403802], [36.682159, 127.409438], [36.682246, 127.411115], [36.682333, 127.412791], [36.682406, 127.414445], [36.682477, 127.416123], [36.68284, 127.417434], [36.683005, 127.418957], [36.683099, 127.420633], [36.683208, 127.422279], [36.683356, 127.423949], [36.68338, 127.425542], [36.683749, 127.427112], [36.683993, 127.428764], [36.684237, 127.430417], [36.684487, 127.432063], [36.684739, 127.433713], [36.69779, 127.45711], [36.71458, 127.47034], [36.73654, 127.46247], [36.75115, 127.44981], [36.76758, 127.44753], [36.782085, 127.435112], [36.78746, 127.43531], [36.80847, 127.43051], [36.82561, 127.40683], [36.84208, 127.39291], [36.8616, 127.3758], [36.87481, 127.38238], [36.88663, 127.36578], [36.90309, 127.35718], [36.9115, 127.34006], [36.9238, 127.32978], [36.93306, 127.32132], [36.93801, 127.32005], [36.94967, 127.3164], [36.96074, 127.31007], [36.97201, 127.31604], [36.97794, 127.30997], [36.99477, 127.29313], [37.00533, 127.27976], [37.01112, 127.27064], [37.02637, 127.26501], [37.04859, 127.26188], [37.050156, 127.260642], [37.065708, 127.256129], [37.106387, 127.251012], [37.114886, 127.213973], [37.13974, 127.196759], [37.144313, 127.199788], [37.145453, 127.202326], [37.184791, 127.20428], [37.195928, 127.201133], [37.196602, 127.199871], [37.19326, 127.19142], [37.199446, 127.181886], [37.220181, 127.171114], [37.237174, 127.179254], [37.238197, 127.179052], [37.238442, 127.177387], [37.238742, 127.175742], [37.239378, 127.174445], [37.24489, 127.166274], [37.248386, 127.166807], [37.249494, 127.167614], [37.250694, 127.168138], [37.252182, 127.167854], [37.253278, 127.166914], [37.254327, 127.165894], [37.255384, 127.164844], [37.256492, 127.16395], [37.258368, 127.162253], [37.25926, 127.161037], [37.260176, 127.159851], [37.261865, 127.16151], [37.262811, 127.160379], [37.263809, 127.159268], [37.264891, 127.158259], [37.266069, 127.157493], [37.267255, 127.156792], [37.268463, 127.156143], [37.270543, 127.155857], [37.271481, 127.156983], [37.273448, 127.157696], [37.27478, 127.157568], [37.27598, 127.156988], [37.276911, 127.155763], [37.27954, 127.156344], [37.280425, 127.15507], [37.281398, 127.154022], [37.281966, 127.153706], [37.283197, 127.153689], [37.284179, 127.141724], [37.284147, 127.140472], [37.284997, 127.139329], [37.2857, 127.138002], [37.289347, 127.136598], [37.289557, 127.135027], [37.289891, 127.133949], [37.291199, 127.131294], [37.29111, 127.128103], [37.290744, 127.126226], [37.291009, 127.124632], [37.292986, 127.11388], [37.294392, 127.111964], [37.295195, 127.110702], [37.295837, 127.109303], [37.296935, 127.108422], [37.29796, 127.107627], [37.300874, 127.10615], [37.302012, 127.105109], [37.312567, 127.10443], [37.320677, 127.106752], [37.321448, 127.108142], [37.323661, 127.110076], [37.324957, 127.110951], [37.326233, 127.110986], [37.327508, 127.110837], [37.33998, 127.11302], [37.35078, 127.12045], [37.37683, 127.10854], [37.383649, 127.115131], [37.396862, 127.123826], [37.398209, 127.12385], [37.41043, 127.12286], [37.416695, 127.118946], [37.417943, 127.118381], [37.42161, 127.11723], [37.43057, 127.11846], [37.473439, 127.120551], [37.496923, 127.090687], [37.500386, 127.073888], [37.507156, 127.068513], [37.51115, 127.067999], [37.516303, 127.069177], [37.517645, 127.069022], [37.519394, 127.069991], [37.51961, 127.071592], [37.519398, 127.073246], [37.519115, 127.074907], [37.51926, 127.09109], [37.52361, 127.10143], [37.53526, 127.11037], [37.54349, 127.118929], [37.544719, 127.119502], [37.54567, 127.12444]];
+const ROUTE_CUM    = [0.0, 0.14, 0.29, 0.44, 0.58, 0.73, 0.88, 1.03, 1.18, 2.01, 2.59, 2.74, 3.51, 3.66, 3.8, 3.95, 4.1, 5.04, 7.28, 8.38, 9.08, 9.22, 9.37, 9.52, 9.66, 9.81, 9.96, 10.11, 10.26, 10.41, 10.56, 10.71, 10.86, 11.01, 11.16, 11.3, 11.45, 11.6, 11.75, 11.9, 12.04, 12.19, 12.34, 12.49, 12.64, 12.79, 12.93, 13.08, 13.23, 13.4, 15.83, 16.02, 16.18, 16.33, 16.47, 16.62, 16.77, 16.92, 17.05, 17.2, 18.24, 19.76, 21.58, 23.47, 25.49, 27.76, 28.31, 28.46, 28.73, 31.16, 33.17, 33.3, 33.62, 33.79, 33.92, 34.07, 35.27, 37.23, 37.45, 37.73, 38.01, 38.89, 40.74, 40.89, 41.03, 41.18, 41.68, 42.0, 42.21, 42.34, 42.51, 42.76, 42.9, 43.05, 43.63, 44.87, 45.05, 46.13, 46.5, 46.63, 47.32, 48.0, 49.98, 52.24, 53.53, 54.72, 55.45, 56.62, 58.5, 60.83, 61.34, 63.01, 64.1, 68.29, 71.96, 73.72, 75.87, 77.19, 78.61, 79.09, 79.24, 79.38, 79.52, 79.66, 81.46, 82.7, 82.84, 82.99, 83.98, 85.94, 87.39, 87.53, 87.68, 89.0, 89.14, 90.51, 90.79, 90.94, 91.09, 91.28, 93.65, 94.45, 94.6, 94.75, 94.89, 95.04, 95.18, 95.33, 95.48, 95.63, 95.77, 95.92, 96.07, 96.21, 96.36, 96.51, 96.66, 96.81, 96.96, 97.11, 97.25, 97.4, 97.54, 97.69, 97.84, 97.99, 98.14, 98.28, 98.43, 98.57, 98.71, 103.04, 103.99, 105.58, 109.57, 111.34, 112.89, 114.14, 115.34, 117.68, 119.09, 121.54, 124.4, 126.68, 128.61, 130.43, 131.52, 132.38, 132.68, 134.17, 136.4, 138.14, 139.52, 140.17, 141.29, 142.54, 142.95, 143.73, 143.88, 144.27, 144.42, 144.63, 145.8, 146.98, 148.1, 149.73, 152.15, 153.35, 156.7, 158.92, 160.68, 163.12, 164.93, 165.32, 166.82, 166.95, 167.1, 167.6, 170.17, 172.34, 172.78, 174.65, 175.99, 177.55, 180.93, 182.93, 184.69, 187.0, 189.09, 190.94, 191.75, 191.9, 193.0, 194.27, 195.75, 196.84, 197.87, 199.18, 200.73, 202.78, 202.93, 203.32, 203.46, 203.8, 205.56, 205.7, 205.84, 205.98, 206.77, 208.14, 209.17, 212.49, 212.64, 212.78, 212.93, 213.08, 213.72, 213.87, 214.02, 214.17, 214.32, 214.46, 214.6, 214.75, 214.89, 215.04, 215.18, 215.33, 215.47, 215.62, 215.76, 216.14, 217.55, 218.82, 220.49, 221.55, 223.04, 224.64, 226.1, 227.67, 227.82, 227.97, 228.42, 230.56, 230.71, 230.85, 231.0, 231.15, 231.3, 231.44, 231.59, 231.74, 231.89, 232.03, 232.18, 232.33, 233.57, 233.76, 233.91, 234.05, 234.61, 234.76, 235.08, 235.82, 237.66, 239.16, 240.63, 241.61, 241.75, 241.9, 242.04, 242.19, 242.33, 242.47, 242.62, 242.92, 243.67, 245.73, 247.55, 249.57, 250.87, 253.84, 255.42, 257.58, 257.84, 257.99, 258.13, 258.28, 258.43, 259.78, 260.82, 260.97, 261.12, 261.27, 261.42, 261.56, 262.17, 262.32, 262.87, 263.02, 264.59, 267.73, 270.72, 271.81, 272.01, 273.28, 273.43, 273.57, 273.71, 273.86, 274.0, 274.98, 276.33, 278.13, 280.32, 282.3, 284.47, 285.89, 286.05, 286.85, 288.75, 290.69, 292.51, 295.5, 297.5, 299.33, 301.04, 302.87, 304.03, 306.14, 306.29, 306.44, 306.58, 306.73, 306.88, 307.03, 307.17, 307.32, 307.47, 309.47, 310.13, 311.12, 312.95, 313.1, 313.27, 314.28, 314.43, 314.58, 314.73, 314.88, 316.06, 316.2, 317.06, 320.24, 322.7, 323.37, 324.85, 326.55, 326.7, 327.03, 327.4, 327.54, 327.68, 327.83, 329.49, 330.26, 331.89, 332.03, 332.17, 332.31, 332.49, 332.73, 332.87, 333.02, 333.17, 333.38, 333.53, 333.68, 333.81, 333.96, 334.21, 334.38, 334.53, 334.67, 334.82, 337.73, 341.8, 341.95, 342.09, 342.24, 342.39, 342.54, 342.69, 342.83, 342.98, 343.12, 343.27, 343.42, 343.63, 343.78, 343.93, 344.07, 344.22, 344.37, 344.52, 344.67, 344.81, 344.96, 345.11, 345.26, 345.42, 345.57, 346.28, 346.43, 346.58, 346.73, 346.88, 347.03, 347.34, 348.64, 349.96, 350.12, 350.27, 350.41, 350.56, 350.71, 350.86, 351.01, 351.16, 351.3, 351.47, 351.62, 351.76, 351.91, 352.06, 352.2, 352.35, 352.49, 352.64, 352.79, 352.93, 353.08, 353.22, 353.44, 353.78, 354.46, 356.85, 360.35, 363.88, 368.18, 370.41, 371.8, 372.01, 372.39, 372.78, 373.04, 374.64, 376.83, 377.51, 377.66, 377.81, 377.96, 378.11, 378.26, 378.4, 381.43, 384.04, 384.79, 384.93, 385.73, 386.67, 387.38, 389.13, 389.3, 389.45, 390.01, 390.16, 390.31, 390.45, 392.88, 393.65, 393.81, 393.96, 394.11, 394.26, 394.41, 394.56, 394.71, 395.02, 395.17, 395.32, 395.47, 395.61, 395.76, 395.91, 396.81, 396.95, 397.76, 398.78, 403.73, 407.28, 408.62, 409.8, 409.94, 410.85, 411.55, 414.89, 417.29, 420.47, 423.31, 427.19, 427.79, 431.02, 431.17, 431.41, 433.68, 433.91, 434.05, 434.19, 434.34, 434.49, 435.56, 438.22, 440.64, 440.79, 440.94, 441.09, 441.23, 441.38, 443.75, 444.07, 444.21, 445.32, 447.4, 450.0, 453.27, 453.47, 454.07, 454.22, 454.37, 455.12, 455.26, 455.43, 456.3, 456.45, 456.94, 457.08, 457.23, 457.37, 457.52, 457.67, 457.81, 457.96, 458.11, 459.56, 462.03, 464.81, 466.22, 467.3, 467.45, 467.6, 467.74, 469.72, 471.7, 475.04, 477.06, 479.74, 481.39, 481.85, 482.03, 483.64, 487.13, 487.83, 489.27, 491.68, 491.82, 491.96, 492.1, 492.25, 492.4, 492.53, 494.05, 497.07, 499.18, 502.14, 502.61, 502.75, 502.88, 503.03, 503.17, 503.37, 504.13, 506.6, 509.14, 511.17, 512.34, 512.48, 512.63, 512.95, 513.65, 515.56, 519.31, 520.53, 522.63, 522.84, 523.23, 523.37, 523.58, 523.73, 523.88, 524.03, 524.26, 524.72, 525.57, 527.57, 529.5, 529.73, 532.7, 535.41, 535.56, 536.01, 536.83, 539.07, 543.84, 548.0, 549.39, 550.43, 552.26, 555.0, 559.13, 560.84, 560.99, 561.91, 562.81, 565.11, 567.5, 568.23, 570.67, 573.15, 579.22, 581.05, 582.52, 583.65, 583.8, 583.94, 584.09, 584.7, 585.57, 585.71, 585.86, 586.36, 586.52, 586.65, 586.81, 586.96, 587.1, 587.24, 587.39, 587.54, 587.67, 587.82, 587.96, 588.1, 588.24, 588.46, 589.54, 590.73, 591.99, 594.08, 595.76, 597.17, 598.64, 600.14, 601.51, 602.58, 603.99, 605.1, 607.15, 608.69, 608.84, 608.99, 609.14, 609.28, 609.43, 609.58, 610.51, 611.66, 611.81, 611.95, 612.09, 612.24, 614.06, 616.02, 616.73, 618.44, 620.8, 621.88, 622.48, 623.72, 626.47, 628.23, 630.18, 631.41, 633.02, 635.03, 637.63, 638.94, 639.84, 639.98, 640.13, 640.28, 640.43, 640.58, 640.73, 640.87, 641.01, 641.15, 641.3, 641.45, 643.68, 645.55, 645.92, 647.48, 649.19, 651.03, 651.17, 652.68, 654.74, 656.42, 656.57, 657.95, 659.21, 660.04, 660.89, 662.66, 664.62, 665.28, 665.43, 667.65, 668.01, 668.16, 668.3, 669.54, 670.99, 672.38, 672.79, 672.93, 673.08, 673.22, 673.37, 675.22, 677.47, 678.29, 678.43, 678.57, 682.1, 682.92, 683.06, 684.22, 685.83, 687.94, 690.62, 692.73, 694.18, 695.86, 696.66, 697.56, 698.87, 700.59, 701.82, 704.15, 707.57, 710.69, 711.6, 711.75, 711.89, 712.04, 712.18, 712.33, 714.55, 716.68, 719.93, 722.58, 724.62, 726.89, 727.04, 727.44, 728.44, 729.67, 731.89, 732.47, 733.76, 735.0, 737.57, 739.42, 740.75, 741.87, 743.99, 745.58, 746.56, 746.82, 747.18, 747.38, 751.71, 753.04, 753.99, 756.27, 757.18, 758.25, 758.4, 758.54, 758.69, 758.83, 758.97, 759.22, 759.37, 759.55, 760.02, 760.53, 763.44, 764.61, 765.05, 765.2, 765.34, 765.89, 767.63, 769.42, 769.92, 770.24, 770.38, 770.68, 772.01, 775.63, 776.85, 779.26, 779.4, 779.55, 779.73, 779.88, 780.03, 780.17, 781.54, 783.91, 786.47, 790.42, 790.57, 790.71, 790.86, 791.0, 793.51, 794.46, 794.86, 795.48, 798.96, 800.55, 802.45, 805.03, 807.24, 810.58, 811.04, 811.18, 812.14, 814.9, 815.04, 815.66, 816.82, 818.85, 821.54, 823.88, 824.65, 824.8, 824.95, 825.09, 825.24, 825.39, 825.53, 825.68, 825.82, 826.42, 827.32, 827.49, 828.12, 828.45, 828.6, 829.2, 829.34, 831.88, 834.79, 837.24, 837.38, 838.46, 838.94, 841.31, 841.46, 841.6, 841.75, 841.9, 842.05, 844.43, 847.02, 848.06, 849.09, 851.5, 851.65, 851.8, 855.02, 855.8, 860.28, 862.47, 865.88, 868.13, 871.26, 872.07, 872.89, 873.03, 874.46, 875.98, 880.43, 884.86, 885.44, 886.94, 887.09, 887.23, 887.38, 887.53, 887.68, 887.83, 888.57, 889.19, 889.34, 889.49, 889.63, 889.78, 889.93, 892.31, 892.46, 892.6, 892.75, 892.9, 893.05, 893.78, 895.51, 896.09, 897.1, 897.87, 898.01, 899.59, 902.63, 904.4, 904.55, 904.7, 904.84, 904.99, 905.13, 905.84, 907.45, 909.43, 909.86, 910.13, 910.62, 910.96, 913.3, 916.08, 919.89, 924.51, 926.76, 928.82, 929.55, 929.7, 929.84, 929.99, 930.14, 930.28, 930.43, 930.57, 930.72, 930.86, 931.01, 931.16, 931.3, 931.45, 931.74, 932.07, 932.22, 932.36, 932.51, 932.65, 932.8, 934.02, 935.41, 935.57, 935.72, 935.87, 936.02, 936.17, 936.32, 936.47, 936.62, 937.34, 937.49, 937.63, 937.78, 937.93, 938.07, 938.22, 938.37, 938.52, 938.67, 938.82, 938.97, 939.18, 939.33, 939.47, 939.61, 939.76, 939.91, 940.06, 940.21, 940.35, 940.5, 940.65, 940.8, 940.95, 941.1, 941.74, 941.89, 942.04, 942.19, 942.34, 942.49, 942.64, 942.78, 942.93, 943.08, 943.23, 943.38, 943.53, 943.68, 943.83, 943.98, 944.13, 944.28, 944.43, 944.58, 944.73, 944.88, 945.03, 945.18, 945.33, 945.48, 945.62, 945.77, 945.92, 946.07, 946.22, 946.37, 946.51, 946.65, 946.8, 946.95, 947.09, 947.23, 947.38, 947.53, 947.68, 947.88, 948.05, 948.19, 948.34, 948.52, 948.65, 948.8, 948.94, 949.08, 949.23, 949.38, 949.59, 949.74, 949.88, 950.02, 950.17, 950.31, 950.47, 950.61, 950.76, 952.32, 954.99, 955.93, 956.08, 956.87, 958.43, 960.51, 963.6, 965.8, 966.79, 968.61, 969.2, 969.34, 969.48, 969.63, 969.78, 969.93, 970.08, 970.28, 970.43, 970.58, 970.73, 970.88, 971.02, 971.17, 971.32, 971.46, 971.61, 971.74, 971.89, 972.04, 972.19, 972.34, 972.48, 972.63, 972.91, 974.12, 976.84, 978.52, 978.67, 978.82, 978.96, 979.32, 982.18, 985.37, 987.06, 988.84, 991.08, 992.49, 993.71, 995.0, 996.6, 997.22, 997.37, 997.53, 997.78, 997.93, 998.07, 998.22, 998.37, 998.52, 998.67, 998.82, 998.97, 999.12, 999.68, 1001.31, 1003.52, 1004.89, 1006.72, 1009.09, 1011.66, 1012.05, 1014.33, 1014.5, 1014.69, 1014.84, 1014.99, 1015.13, 1015.27, 1015.42, 1015.57, 1015.72, 1016.84, 1018.48, 1021.1, 1023.41, 1025.21, 1025.36, 1025.51, 1025.65, 1025.8, 1025.94, 1026.09, 1026.24, 1026.39, 1026.54, 1026.69, 1026.84, 1026.99, 1027.14, 1027.29, 1027.44, 1027.58, 1027.73, 1027.88, 1028.03, 1028.18, 1028.33, 1028.49, 1029.56, 1031.35, 1032.45, 1034.53, 1037.02, 1038.83, 1039.58, 1041.31, 1041.74, 1041.88, 1042.02, 1043.09, 1045.02, 1047.05, 1047.59, 1047.78, 1049.89, 1052.43, 1054.8, 1056.93, 1061.69, 1063.2, 1063.73, 1063.88, 1064.03, 1064.18, 1064.33, 1064.47, 1064.61, 1064.76, 1064.9, 1065.05, 1065.2, 1065.35, 1065.5, 1065.64, 1065.79, 1065.94, 1068.74, 1071.01, 1073.9, 1076.01, 1078.21, 1080.23, 1080.84, 1083.34, 1086.38, 1089.12, 1091.95, 1094.08, 1096.28, 1098.6, 1100.56, 1102.52, 1104.18, 1105.1, 1106.81, 1108.27, 1109.97, 1111.54, 1114.18, 1116.26, 1117.45, 1119.53, 1122.13, 1122.34, 1124.16, 1129.1, 1133.24, 1136.77, 1137.34, 1137.67, 1142.16, 1143.86, 1144.0, 1144.86, 1145.99, 1148.76, 1150.9, 1151.05, 1151.2, 1151.35, 1151.5, 1152.48, 1152.89, 1153.03, 1153.17, 1153.34, 1153.49, 1153.64, 1153.79, 1153.94, 1154.2, 1154.34, 1154.49, 1154.79, 1154.93, 1155.08, 1155.23, 1155.38, 1155.53, 1155.67, 1155.98, 1156.13, 1156.36, 1156.51, 1156.65, 1156.8, 1157.2, 1157.35, 1157.49, 1157.62, 1157.77, 1159.16, 1159.3, 1159.44, 1159.59, 1160.03, 1160.17, 1160.33, 1160.61, 1160.92, 1161.12, 1161.26, 1162.26, 1162.53, 1162.67, 1162.81, 1162.96, 1163.1, 1163.45, 1163.6, 1164.8, 1165.77, 1165.92, 1166.25, 1166.45, 1166.59, 1166.73, 1168.19, 1169.83, 1173.25, 1174.21, 1175.92, 1176.07, 1177.45, 1178.23, 1178.38, 1178.8, 1179.9, 1184.89, 1188.84, 1190.42, 1191.39, 1191.84, 1192.54, 1192.69, 1192.92, 1193.07, 1193.22, 1193.37, 1194.81, 1195.87, 1197.43, 1198.69, 1198.83, 1199.39];
+const CHECKPOINTS  = [{"name": "🚩 起點", "name_en": "Start · Hanam Misari", "dist": 0, "eta": "06/06 06:00", "elapsed": "0h", "type": "start", "lat": 37.545104, "lon": 127.119165}, {"name": "이천", "name_en": "Icheon", "dist": 50, "eta": "06/06 08:30", "elapsed": "2.7h", "type": "supply", "lat": 37.469689, "lon": 127.49796}, {"name": "음성", "name_en": "Eumseong", "dist": 100, "eta": "06/06 11:10", "elapsed": "5.3h", "type": "supply", "lat": 37.206812, "lon": 127.747168}, {"name": "청주", "name_en": "Cheongju", "dist": 160, "eta": "06/06 14:20", "elapsed": "8.8h", "type": "lunch", "lat": 36.8299, "lon": 127.84604}, {"name": "대전 CP1", "name_en": "Daejeon CP1", "dist": 220, "eta": "06/06 17:50", "elapsed": "12.0h", "type": "cp", "lat": 36.44019, "lon": 127.69861}, {"name": "논산", "name_en": "Nonsan", "dist": 280, "eta": "06/06 21:00", "elapsed": "15.2h", "type": "supply", "lat": 36.16209, "lon": 127.32455}, {"name": "🛏 익산#1", "name_en": "Iksan · H Avenue", "dist": 340, "eta": "06/07 00:10", "elapsed": "21.0h", "type": "sleep", "lat": 35.931129, "lon": 126.949854}, {"name": "김제", "name_en": "Gimje", "dist": 390, "eta": "06/07 05:30", "elapsed": "24.0h", "type": "lunch", "lat": 35.592013, "lon": 126.866664}, {"name": "광주 CP2", "name_en": "Gwangju CP2", "dist": 450, "eta": "06/07 09:00", "elapsed": "27.2h", "type": "cp", "lat": 35.183612, "lon": 126.733199}, {"name": "나주", "name_en": "Naju", "dist": 500, "eta": "06/07 11:40", "elapsed": "29.8h", "type": "supply", "lat": 34.894716, "lon": 126.59205}, {"name": "목포 CP3", "name_en": "Mokpo CP3", "dist": 560, "eta": "06/07 14:50", "elapsed": "33.3h", "type": "cp", "lat": 34.490282, "lon": 126.499394}, {"name": "🛏 완도#2", "name_en": "Wando · Nesia Hotel", "dist": 640, "eta": "06/07 19:20", "elapsed": "47.0h", "type": "sleep", "lat": 34.33578, "lon": 126.782398}, {"name": "보성", "name_en": "Boseong", "dist": 700, "eta": "06/08 08:00", "elapsed": "50.2h", "type": "supply", "lat": 34.557723, "lon": 126.84813}, {"name": "순천", "name_en": "Suncheon", "dist": 760, "eta": "06/08 11:10", "elapsed": "53.7h", "type": "lunch", "lat": 34.727403, "lon": 126.582141}, {"name": "남원", "name_en": "Namwon", "dist": 820, "eta": "06/08 14:40", "elapsed": "56.8h", "type": "supply", "lat": 35.128805, "lon": 126.622308}, {"name": "전주 CP4", "name_en": "Jeonju CP4", "dist": 880, "eta": "06/08 17:50", "elapsed": "60.0h", "type": "cp", "lat": 35.52139, "lon": 126.80533}, {"name": "🛏 익산#3", "name_en": "Iksan · H Avenue", "dist": 940, "eta": "06/08 21:00", "elapsed": "69.0h", "type": "sleep", "lat": 35.926044, "lon": 126.951191}, {"name": "공주", "name_en": "Gongju", "dist": 1000, "eta": "06/09 06:00", "elapsed": "72.5h", "type": "lunch", "lat": 36.35328, "lon": 127.0546}, {"name": "천안", "name_en": "Cheonan", "dist": 1060, "eta": "06/09 09:30", "elapsed": "75.7h", "type": "supply", "lat": 36.67177, "lon": 127.3923}, {"name": "수원", "name_en": "Suwon", "dist": 1120, "eta": "06/09 12:40", "elapsed": "78.8h", "type": "supply", "lat": 37.02637, "lon": 127.26501}, {"name": "🏁 終點", "name_en": "Finish · Hanam Misari", "dist": 1199, "eta": "06/09 19:00", "elapsed": "85h", "type": "finish", "lat": 37.544719, "lon": 127.119502}];
+const TOTAL_KM     = 1199.4;
+const SPEED_KMH    = 20;
+
+// ── CP type colours ──
+const CP_COLORS = {
+  start:  '#ff4d1c', finish: '#22c55e', sleep:  '#a855f7',
+  cp:     '#fde047', lunch:  '#f59e0b', supply: '#3b82f6'
+};
+
+// ══ INIT MAP ══
+const map = L.map('map', {
+  center: [36.0, 127.3],
+  zoom: 7,
+  zoomControl: true,
+  attributionControl: false
+});
+
+// Dark tile layer
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  maxZoom: 19, subdomains: 'abcd'
+}).addTo(map);
+
+// ── Draw route polyline ──
+const routeLine = L.polyline(ROUTE_COORDS, {
+  color: '#ff4d1c', weight: 3, opacity: 0.85,
+  smoothFactor: 1
+}).addTo(map);
+
+// ── Add checkpoint markers ──
+CHECKPOINTS.forEach((cp, idx) => {
+  const col = CP_COLORS[cp.type] || '#3b82f6';
+  const isSleep = cp.type === 'sleep';
+  const isStart = cp.type === 'start';
+  const isFinish = cp.type === 'finish';
+  const size = (isStart || isFinish) ? 14 : isSleep ? 12 : 9;
+
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="width:${size}px;height:${size}px;background:${col};border:2px solid rgba(255,255,255,0.8);border-radius:50%;box-shadow:0 0 6px ${col}88;"></div>`,
+    iconSize: [size, size],
+    iconAnchor: [size/2, size/2]
+  });
+
+  const marker = L.marker([cp.lat, cp.lon], { icon }).addTo(map);
+
+  const typeLabel = { start:'出發', finish:'終點', sleep:'🛏 住宿', cp:'📍 CP', lunch:'🍱 午餐', supply:'補給' }[cp.type] || '';
+  marker.bindPopup(`
+    <div class="cp-popup-name">${cp.name} &nbsp;<span style="font-size:11px;color:#6b7a90;font-family:monospace">${cp.dist}km</span></div>
+    <div class="cp-popup-row"><span>預計抵達</span><span>${cp.eta}</span></div>
+    <div class="cp-popup-row"><span>累計時數</span><span>${cp.elapsed}</span></div>
+    <div class="cp-popup-row"><span>性質</span><span>${typeLabel}</span></div>
+    ${cp.name_en ? `<div style="font-size:10px;color:#6b7a90;margin-top:6px;font-family:monospace">${cp.name_en}</div>` : ''}
+  `, { maxWidth: 220 });
+});
+
+// ── GPS marker (hidden initially) ──
+let gpsMarker = null;
+let gpsCircle = null;
+let watchId   = null;
+let lastKnownDist = null;
+
+function createGpsMarker(lat, lon, acc) {
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="width:18px;height:18px;background:#22c55e;border:3px solid #fff;border-radius:50%;box-shadow:0 0 10px #22c55e,0 0 20px #22c55e66;animation:pulse 1.5s ease-in-out infinite;"></div>
+    <style>@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}</style>`,
+    iconSize: [18, 18],
+    iconAnchor: [9, 9]
+  });
+  if (gpsMarker) { map.removeLayer(gpsMarker); map.removeLayer(gpsCircle); }
+  gpsCircle = L.circle([lat, lon], { radius: acc, color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.08, weight: 1 }).addTo(map);
+  gpsMarker = L.marker([lat, lon], { icon, zIndexOffset: 1000 }).addTo(map);
+  gpsMarker.bindPopup('<div style="font-family:monospace;font-size:12px;color:#22c55e;font-weight:700">📍 你的位置<br><span style="color:#6b7a90">精確度: ' + Math.round(acc) + 'm</span></div>');
+}
+
+// ── Project GPS onto route (find nearest route point) ──
+function haversineKm(a, b) {
+  const R = 6371;
+  const dLat = (b[0]-a[0]) * Math.PI/180;
+  const dLon = (b[1]-a[1]) * Math.PI/180;
+  const x = Math.sin(dLat/2)**2 + Math.cos(a[0]*Math.PI/180)*Math.cos(b[0]*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.asin(Math.sqrt(x));
+}
+
+function findNearestOnRoute(lat, lon) {
+  let bestIdx = 0, bestDist = Infinity;
+  for (let i = 0; i < ROUTE_COORDS.length; i++) {
+    const d = haversineKm([lat, lon], ROUTE_COORDS[i]);
+    if (d < bestDist) { bestDist = d; bestIdx = i; }
+  }
+  return { idx: bestIdx, cumKm: ROUTE_CUM[bestIdx], offRoutKm: bestDist };
+}
+
+function findNextCP(cumKm) {
+  for (let i = 0; i < CHECKPOINTS.length; i++) {
+    if (CHECKPOINTS[i].dist > cumKm) return { next: CHECKPOINTS[i], prev: CHECKPOINTS[i-1] || CHECKPOINTS[0] };
+  }
+  return { next: CHECKPOINTS[CHECKPOINTS.length-1], prev: CHECKPOINTS[CHECKPOINTS.length-2] };
+}
+
+function updateStatus(lat, lon, acc) {
+  const { idx, cumKm, offRoutKm } = findNearestOnRoute(lat, lon);
+  const remain = Math.max(0, TOTAL_KM - cumKm);
+  const { next, prev } = findNextCP(cumKm);
+  const distToNext = Math.max(0, next.dist - cumKm);
+  const etaMins = distToNext / SPEED_KMH * 60;
+  const etaHours = Math.floor(etaMins / 60);
+  const etaMinsRem = Math.round(etaMins % 60);
+  const etaStr = etaHours > 0 ? `${etaHours}h${etaMinsRem.toString().padStart(2,'0')}m` : `${Math.round(etaMins)}min`;
+
+  // Compute wall-clock ETA
+  const now = new Date();
+  const etaDate = new Date(now.getTime() + etaMins * 60000);
+  const etaTime = etaDate.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+
+  document.getElementById('sv-dist').textContent = cumKm.toFixed(1);
+  document.getElementById('sv-remain').textContent = remain.toFixed(1);
+  document.getElementById('sv-next-dist').textContent = distToNext.toFixed(1);
+  document.getElementById('sv-next-eta').textContent = `${etaStr} (${etaTime})`;
+
+  document.getElementById('ncp-name').textContent = next.name;
+  document.getElementById('ncp-name2').textContent = next.name;
+  document.getElementById('ncp-detail').textContent = `計劃抵達 ${next.eta}`;
+  document.getElementById('prev-cp-name').textContent = prev.name;
+
+  const segLen = next.dist - prev.dist;
+  const segDone = Math.max(0, cumKm - prev.dist);
+  const pct = segLen > 0 ? Math.min(100, segDone / segLen * 100) : 0;
+  document.getElementById('progress-fill').style.width = pct.toFixed(1) + '%';
+  document.getElementById('ncp-pct').textContent = pct.toFixed(0) + '%';
+
+  const offNote = offRoutKm > 0.5 ? ` · ⚠️ 偏離路線 ${offRoutKm.toFixed(1)}km` : '';
+  document.getElementById('gps-status').className = 'ok';
+  document.getElementById('gps-status').textContent = `✓ GPS 定位中 · 精確度 ±${Math.round(acc)}m · 最後更新 ${new Date().toLocaleTimeString('zh-TW')}${offNote}`;
+
+  document.getElementById('status-card').classList.add('visible');
+  lastKnownDist = cumKm;
+}
+
+function startLocating() {
+  const btn = document.getElementById('locate-btn');
+  if (!navigator.geolocation) {
+    document.getElementById('gps-status').className = 'err';
+    document.getElementById('gps-status').textContent = '❌ 此瀏覽器不支援 GPS 定位';
+    return;
+  }
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> 定位中…';
+  document.getElementById('gps-status').textContent = '⏳ 正在取得 GPS 位置，請稍候…';
+
+  if (watchId) navigator.geolocation.clearWatch(watchId);
+
+  watchId = navigator.geolocation.watchPosition(
+    (pos) => {
+      const { latitude: lat, longitude: lon, accuracy: acc } = pos.coords;
+      createGpsMarker(lat, lon, acc);
+      map.setView([lat, lon], Math.max(map.getZoom(), 11));
+      updateStatus(lat, lon, acc);
+      btn.innerHTML = '<span>📍</span> 追蹤中';
+      btn.disabled = false;
+      btn.style.background = '#22c55e';
+    },
+    (err) => {
+      btn.disabled = false;
+      btn.innerHTML = '<span>📍</span> 重試定位';
+      document.getElementById('gps-status').className = 'err';
+      const msgs = { 1:'❌ 請允許瀏覽器存取位置權限', 2:'❌ 無法取得位置訊號（GPS 信號弱？）', 3:'❌ 定位逾時，請重試' };
+      document.getElementById('gps-status').textContent = msgs[err.code] || '❌ 定位失敗';
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
+  );
+}
+</script>
 </body>
 </html>
