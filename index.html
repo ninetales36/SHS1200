@@ -3,617 +3,1154 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SHS 1200K Korea | Race Planner</title>
+<title>SHS 1200K Korea | 賽事指揮官</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+TC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap');
   :root {
-    --bg:#0a0c0f; --surface:#111418; --surface2:#1a1f26; --border:#252c38;
-    --accent:#ff4d1c; --gold:#c9a84c; --green:#22c55e; --blue:#3b82f6;
-    --purple:#a855f7; --text:#e8edf5; --muted:#6b7a90; --sleep:#7c3aed;
+    --bg: #0a0e1a;
+    --card: #111827;
+    --card2: #1a2236;
+    --border: #1e3a5f;
+    --accent: #ff4d1c;
+    --accent2: #c9a84c;
+    --accent3: #22c55e;
+    --warn: #ffd700;
+    --danger: #ff3b3b;
+    --sleep: #a855f7;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --finish: #22c55e;
   }
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
 
-  /* HERO */
-  .hero{position:relative;overflow:hidden;padding:50px 24px 40px;text-align:center;border-bottom:1px solid var(--border);}
-  .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(255,77,28,.18) 0%,transparent 70%),repeating-linear-gradient(0deg,transparent 39px,rgba(255,77,28,.04) 40px),repeating-linear-gradient(90deg,transparent 39px,rgba(255,77,28,.04) 40px);pointer-events:none;}
-  .badge{display:inline-block;background:var(--accent);color:#fff;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.12em;padding:4px 14px;border-radius:2px;margin-bottom:16px;text-transform:uppercase;}
-  .hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,9vw,110px);letter-spacing:.04em;line-height:.9;position:relative;}
-  .hero h1 span{color:var(--accent);}
-  .hero-sub{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);margin-top:14px;letter-spacing:.08em;}
-  .hero-stats{display:flex;justify-content:center;gap:36px;margin-top:28px;flex-wrap:wrap;}
-  .si{text-align:center;}
-  .sv{font-family:'Bebas Neue',sans-serif;font-size:38px;color:var(--accent);line-height:1;}
-  .sl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:3px;}
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #0a0c0f 0%, #1a0800 50%, #0a0c0f 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .header-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo {
+    width: 42px; height: 42px;
+    background: conic-gradient(var(--accent), var(--accent2), var(--accent3), var(--accent));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    animation: spin 8s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .title-text h1 {
+    font-size: 20px; font-weight: 700;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    line-height: 1.1;
+  }
+  .title-text p { font-size: 11px; color: var(--muted); letter-spacing: 2px; margin-top: 2px; }
+  .header-stats {
+    display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+  }
+  .stat-pill {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-family: 'Share Tech Mono', monospace;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .stat-pill .label { color: var(--muted); }
+  .stat-pill .val { color: var(--accent); font-weight: 700; }
 
-  .wrap{max-width:1120px;margin:0 auto;padding:0 20px;}
-  .sh{display:flex;align-items:center;gap:12px;padding:32px 0 16px;}
-  .sh h2{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.06em;}
-  .stag{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);border:1px solid var(--accent);padding:2px 8px;letter-spacing:.1em;text-transform:uppercase;}
+  /* LIVE TRACKER BAR */
+  .tracker-bar {
+    background: linear-gradient(90deg, #1a0800, #111418);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 20px;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  .tracker-label { font-size: 11px; color: var(--accent); font-family: 'Share Tech Mono', monospace; letter-spacing: 1px; }
+  .gps-status {
+    display: flex; align-items: center; gap: 6px; font-size: 12px;
+  }
+  .gps-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--danger);
+    animation: blink 1s infinite;
+  }
+  .gps-dot.active { background: var(--accent3); }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .btn {
+    padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 12px; font-weight: 500; transition: all 0.2s;
+  }
+  .btn-primary {
+    background: var(--accent); color: #000;
+  }
+  .btn-primary:hover { background: #00b8e0; transform: translateY(-1px); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-secondary {
+    background: var(--card2); color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* ── MAP SECTION ── */
-  #map-section{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:24px;}
-  #map{height:500px;width:100%;}
-  .map-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
-  .map-header h3{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.06em;color:var(--text);}
-  #locate-btn{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--accent);color:#fff;border:none;padding:8px 16px;border-radius:3px;cursor:pointer;transition:opacity .2s;display:flex;align-items:center;gap:6px;}
-  #locate-btn:hover{opacity:.8;}
-  #locate-btn:disabled{opacity:.5;cursor:not-allowed;}
-  .map-footer{padding:14px 18px;border-top:1px solid var(--border);background:var(--surface2);}
+  /* MAIN LAYOUT */
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    grid-template-rows: 420px auto;
+    gap: 0;
+    height: calc(100vh - 100px);
+  }
 
-  /* LIVE STATUS CARD */
-  #status-card{display:none;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:16px 20px;}
-  #status-card.visible{display:block;}
-  .status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
-  .status-item{text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px;}
-  .status-val{font-family:'Bebas Neue',sans-serif;font-size:28px;line-height:1;}
-  .status-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px;}
-  #next-cp-bar{margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px 16px;}
-  .ncp-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;}
-  .ncp-name{font-weight:700;font-size:13px;}
-  .ncp-detail{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
-  .progress-track{height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;}
-  .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),#ff7849);border-radius:4px;transition:width .5s ease;}
-  #gps-status{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-top:8px;}
-  #gps-status.ok{color:var(--green);}
-  #gps-status.err{color:#ef4444;}
+  /* MAP */
+  #map {
+    grid-column: 1; grid-row: 1;
+    width: 100%; height: 100%;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
 
-  /* Leaflet dark overrides */
-  .leaflet-container{background:#0d1117;}
-  .leaflet-popup-content-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:4px;box-shadow:0 4px 20px rgba(0,0,0,.6);}
-  .leaflet-popup-content{color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:12px;margin:10px 14px;}
-  .leaflet-popup-tip{background:var(--surface);}
-  .leaflet-popup-close-button{color:var(--muted)!important;}
-  .cp-popup-name{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:.04em;margin-bottom:4px;}
-  .cp-popup-row{display:flex;justify-content:space-between;gap:16px;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
-  .cp-popup-row span:last-child{color:var(--text);}
+  /* PROGRESS PANEL */
+  .progress-panel {
+    grid-column: 2; grid-row: 1;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 16px;
+  }
+  .panel-title {
+    font-size: 11px; letter-spacing: 2px; color: var(--accent);
+    font-family: 'Share Tech Mono', monospace;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+  .time-budget {
+    background: var(--card2);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+  }
+  .budget-row {
+    display: flex; justify-content: space-between;
+    font-size: 13px; margin-bottom: 8px;
+    align-items: center;
+  }
+  .budget-label { color: var(--muted); font-size: 11px; }
+  .budget-val { font-family: 'Share Tech Mono', monospace; font-weight: 700; }
+  .progress-bar-wrap {
+    background: #1a2236; border-radius: 4px; height: 8px; overflow: hidden;
+    margin: 4px 0 8px;
+  }
+  .progress-bar-fill {
+    height: 100%; border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.5s ease;
+  }
+  .time-remaining {
+    text-align: center;
+    margin-top: 6px;
+  }
+  .time-remaining .big {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 28px;
+    background: linear-gradient(90deg, var(--accent3), var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    font-weight: 700;
+  }
+  .time-remaining .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* NEXT CP */
+  .next-cp-card {
+    background: linear-gradient(135deg, #0d1b3e, #1a2236);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .next-cp-card .cp-name {
+    font-weight: 700; font-size: 15px; color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .next-cp-card .cp-dist { font-size: 12px; color: var(--muted); }
+  .cp-times {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px; margin-top: 10px;
+  }
+  .cp-time-box {
+    background: var(--bg); border-radius: 6px; padding: 8px;
+    text-align: center;
+  }
+  .cp-time-box .t-label { font-size: 10px; color: var(--muted); }
+  .cp-time-box .t-val { font-family: 'Share Tech Mono', monospace; font-size: 16px; font-weight: 700; }
+  .cp-time-box.warn .t-val { color: var(--warn); }
+  .cp-time-box.ok .t-val { color: var(--accent3); }
+  .cp-time-box.danger .t-val { color: var(--danger); }
+  .buffer-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 10px; font-size: 12px;
+  }
+  .buffer-good { color: var(--accent3); }
+  .buffer-warn { color: var(--warn); }
+  .buffer-bad { color: var(--danger); }
+
+  /* BOTTOM SECTION */
+  .bottom-section {
+    grid-column: 1 / 3; grid-row: 2;
+    overflow-y: auto;
+    background: var(--bg);
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .tab {
+    padding: 12px 20px; font-size: 13px; cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s; color: var(--muted);
+    font-weight: 500;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
   /* TABLE */
-  .info{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);border-radius:4px;padding:12px 20px;margin-bottom:20px;font-size:12.5px;color:#93c5fd;display:flex;align-items:flex-start;gap:10px;}
-  .info .ic{font-size:16px;flex-shrink:0;margin-top:2px;}
-  .tw{overflow-x:auto;border:1px solid var(--border);border-radius:4px;margin-bottom:40px;}
-  table{width:100%;border-collapse:collapse;min-width:820px;}
-  thead{background:var(--surface2);border-bottom:2px solid var(--accent);}
-  th{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:11px 14px;text-align:left;white-space:nowrap;}
-  tr{border-bottom:1px solid var(--border);transition:background .12s;}
-  tr:last-child{border-bottom:none;}
-  tr:hover{background:rgba(255,255,255,.025);}
-  td{padding:11px 14px;vertical-align:middle;}
-  .rs{background:rgba(255,77,28,.05);}
-  .rsl{background:rgba(124,58,237,.07);}
-  .rf{background:rgba(34,197,94,.05);}
-  .dist{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;padding:2px 8px;border-radius:2px;white-space:nowrap;}
-  .dn{color:var(--accent);background:rgba(255,77,28,.1);}
-  .ds{color:#c4b5fd;background:rgba(168,85,247,.15);}
-  .df{color:var(--green);background:rgba(34,197,94,.12);}
-  .nz{font-weight:500;font-size:13px;}
-  .ne{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px;}
-  .hb{display:inline-block;margin-top:5px;font-size:10px;font-family:'JetBrains Mono',monospace;background:rgba(124,58,237,.2);color:#c4b5fd;border:1px solid rgba(168,85,247,.3);padding:2px 8px;border-radius:2px;}
-  .tm{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;white-space:nowrap;}
-  .ts{font-size:10px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace;}
-  .day{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:#fff;padding:2px 7px;border-radius:2px;white-space:nowrap;}
-  .d1{background:#1d4ed8;} .d2{background:#047857;} .d3{background:#b45309;} .d4{background:#9a3412;}
-  .tag{display:inline-block;padding:2px 7px;border-radius:2px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;white-space:nowrap;}
-  .ts2{background:rgba(59,130,246,.2);color:#93c5fd;}
-  .tl{background:rgba(245,158,11,.18);color:#fcd34d;}
-  .tsl{background:rgba(124,58,237,.3);color:#c4b5fd;}
-  .tst{background:rgba(255,77,28,.25);color:#fca5a5;}
-  .tf{background:rgba(34,197,94,.25);color:#86efac;}
-  .tc{background:rgba(251,191,36,.2);color:#fde68a;}
-  .navs{display:flex;gap:5px;flex-wrap:wrap;}
-  .nav{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;text-decoration:none;padding:3px 9px;border-radius:2px;transition:opacity .15s;white-space:nowrap;}
-  .nav:hover{opacity:.72;}
-  .nv{background:#03C75A;color:#fff;}
-  .gg{background:#4285F4;color:#fff;}
-  .kk{background:#FEE500;color:#3C1E1E;}
+  .table-wrap { overflow-x: auto; padding: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
+  th {
+    background: var(--card2); color: var(--accent);
+    padding: 10px 12px; text-align: left;
+    font-size: 11px; letter-spacing: 1px;
+    font-family: 'Share Tech Mono', monospace;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 5;
+  }
+  td {
+    padding: 9px 12px;
+    border-bottom: 1px solid rgba(30,58,95,0.4);
+    vertical-align: middle;
+  }
+  tr:hover td { background: rgba(0,212,255,0.04); }
+  .row-sleep td { background: rgba(168,85,247,0.08) !important; border-left: 3px solid var(--sleep); }
+  .row-photo td { background: rgba(255,215,0,0.05) !important; }
+  .row-finish td { background: rgba(0,255,136,0.06) !important; border-left: 3px solid var(--finish); }
+  .row-current td { background: rgba(0,212,255,0.1) !important; border-left: 3px solid var(--accent); }
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+  }
+  .badge-sleep { background: rgba(168,85,247,0.2); color: var(--sleep); border: 1px solid var(--sleep); }
+  .badge-supply { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid var(--accent); }
+  .badge-photo { background: rgba(255,215,0,0.1); color: var(--warn); border: 1px solid var(--warn); }
+  .badge-finish { background: rgba(0,255,136,0.1); color: var(--finish); border: 1px solid var(--finish); }
+  .badge-start { background: rgba(255,107,53,0.1); color: var(--accent2); border: 1px solid var(--accent2); }
+  .time-mono { font-family: 'Share Tech Mono', monospace; }
+  .buffer-cell { font-family: 'Share Tech Mono', monospace; font-size: 12px; }
+  .buffer-ok { color: var(--accent3); }
+  .buffer-warn { color: var(--warn); }
+  .buffer-danger { color: var(--danger); }
+  .nav-links { display: flex; gap: 6px; flex-wrap: wrap; }
+  .nav-link {
+    display: inline-block; padding: 3px 8px; border-radius: 4px;
+    font-size: 11px; text-decoration: none; font-weight: 500;
+    transition: all 0.15s;
+  }
+  .nav-google { background: rgba(66,133,244,0.15); color: #4285f4; border: 1px solid rgba(66,133,244,0.3); }
+  .nav-google:hover { background: rgba(66,133,244,0.3); }
+  .nav-apple { background: rgba(255,149,0,0.15); color: #ff9500; border: 1px solid rgba(255,149,0,0.3); }
+  .nav-apple:hover { background: rgba(255,149,0,0.3); }
 
-  /* BUDGET */
-  .bc{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:24px;margin-bottom:40px;}
-  .bl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;}
-  .sb{display:flex;height:14px;border-radius:3px;overflow:hidden;gap:2px;margin-bottom:12px;}
-  .seg{height:100%;border-radius:2px;}
-  .bleg{display:flex;gap:18px;flex-wrap:wrap;}
-  .leg{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
-  .ld{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
-  .bn{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:20px;}
-  .bni{text-align:center;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:14px;}
-  .bnv{font-family:'Bebas Neue',sans-serif;font-size:30px;line-height:1;}
-  .bnl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px;}
+  .nav-naver { background: rgba(3,199,90,0.15); color: #03c75a; border: 1px solid rgba(3,199,90,0.3); }
+  .nav-naver:hover { background: rgba(3,199,90,0.3); }
+  .nav-kakao { background: rgba(248,195,0,0.12); color: #f8c300; border: 1px solid rgba(248,195,0,0.3); }
+  .nav-kakao:hover { background: rgba(248,195,0,0.25); }
 
-  /* TIPS */
-  .tg{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:40px;}
-  .tip{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:18px;}
-  .tip h3{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:.06em;margin-bottom:10px;}
-  .tip p,.tip li{font-size:12.5px;color:var(--muted);line-height:1.75;}
-  .tip ul{padding-left:16px;}
-  .tip li{margin-bottom:3px;}
-  .tip strong{color:var(--text);}
+  /* STRATEGY */
+  .strategy-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px; padding: 20px;
+  }
+  .strategy-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px;
+  }
+  .strategy-card h3 {
+    font-size: 13px; color: var(--accent);
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .strategy-card ul { list-style: none; }
+  .strategy-card li {
+    font-size: 12px; color: #94a3b8; padding: 5px 0;
+    border-bottom: 1px solid rgba(30,58,95,0.3);
+    display: flex; align-items: flex-start; gap: 6px;
+  }
+  .strategy-card li:last-child { border-bottom: none; }
+  .li-icon { flex-shrink: 0; margin-top: 1px; }
 
-  footer{border-top:1px solid var(--border);padding:22px 0;text-align:center;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.07em;}
-  footer a{color:var(--accent);text-decoration:none;}
-  @media(max-width:600px){.hero-stats{gap:16px;}.sv{font-size:30px;}th,td{padding:9px 9px;}.navs{gap:4px;}.nav{font-size:9px;padding:2px 6px;}#map{height:340px;}}
+  /* FOOD */
+  .food-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px; padding: 20px;
+  }
+  .food-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
+  }
+  .food-header {
+    background: linear-gradient(90deg, var(--accent2), #ff9052);
+    padding: 10px 14px;
+    font-weight: 700; font-size: 14px; color: #fff;
+  }
+  .food-body { padding: 12px; }
+  .food-body p { font-size: 12px; color: #94a3b8; line-height: 1.6; }
+  .food-tag { display: inline-block; background: rgba(255,107,53,0.1); color: var(--accent2); font-size: 10px; padding: 2px 8px; border-radius: 10px; margin-top: 6px; }
+
+  /* SLEEP */
+  .sleep-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; padding: 20px; }
+  .sleep-card {
+    background: var(--card); border: 1px solid var(--sleep);
+    border-radius: 10px; padding: 18px;
+  }
+  .sleep-card h3 { color: var(--sleep); margin-bottom: 12px; font-size: 15px; }
+  .sleep-detail { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-bottom: 1px solid rgba(168,85,247,0.15); }
+  .sleep-detail:last-child { border-bottom: none; }
+  .sleep-detail .key { color: var(--muted); }
+  .sleep-detail .val { font-family: 'Share Tech Mono', monospace; color: var(--text); font-weight: 500; }
+
+  /* EMERGENCY */
+  .emergency-section { padding: 20px; }
+  .em-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+  .em-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px;
+  }
+  .em-card h3 { color: var(--warn); font-size: 13px; margin-bottom: 10px; display: flex; gap: 6px; align-items: center; }
+  .em-card p { font-size: 12px; color: #94a3b8; line-height: 1.6; }
+  .em-highlight {
+    background: rgba(255,59,59,0.08); border: 1px solid var(--danger);
+    border-radius: 8px; padding: 10px; margin-top: 8px;
+    font-size: 12px; color: var(--text);
+  }
+
+  /* MOBILE BOTTOM NAV */
+  .mobile-bottom-nav { display: none; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    /* Header: compact */
+    .header { padding: 10px 14px; }
+    .header-stats { display: none; }
+    .title-text h1 { font-size: 16px; }
+    .title-text p { font-size: 10px; }
+    .logo { width: 34px; height: 34px; font-size: 16px; }
+
+    /* Tracker bar: compact */
+    .tracker-bar { padding: 7px 12px; gap: 10px; }
+    .btn { padding: 5px 10px; font-size: 11px; }
+
+    /* Main layout: vertical stack, no fixed height */
+    .main {
+      display: flex;
+      flex-direction: column;
+      height: auto;
+      min-height: 0;
+    }
+
+    /* Map: collapsible, default 147px on mobile */
+    #map {
+      width: 100%;
+      height: 147px;
+      flex-shrink: 0;
+      border-right: none;
+    }
+
+    /* Progress panel: horizontal scrollable strip */
+    .progress-panel {
+      grid-column: unset; grid-row: unset;
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      max-height: none;
+      height: auto;
+    }
+    .progress-panel > * { flex-shrink: 0; }
+    .panel-title { display: none; }
+    .time-budget { min-width: 160px; margin-bottom: 0; padding: 10px 12px; }
+    .next-cp-card { min-width: 220px; margin-bottom: 0; }
+    .time-remaining .big { font-size: 22px; }
+
+    /* Bottom section: takes all remaining space, scrollable */
+    .bottom-section {
+      grid-column: unset; grid-row: unset;
+      flex: 1;
+      height: auto;
+      min-height: 400px;
+      overflow-y: visible;
+      padding-bottom: 56px;
+    }
+
+    /* Desktop tabs: hidden on mobile */
+    .tabs { display: none; }
+
+    /* Mobile bottom nav: fixed at bottom */
+    .mobile-bottom-nav {
+      display: flex;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: #0d1624;
+      border-top: 1px solid var(--border);
+      z-index: 2000;
+      height: 56px;
+    }
+    .mob-tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 500;
+      border-top: 2px solid transparent;
+      transition: all 0.15s;
+      padding: 6px 2px 4px;
+      -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .mob-tab .mob-icon { font-size: 20px; line-height: 1; }
+    .mob-tab.active { color: var(--accent); border-top-color: var(--accent); background: rgba(0,212,255,0.06); }
+
+    /* Table on mobile: card style instead of wide table */
+    .table-wrap { padding: 8px; }
+    table, thead, tbody, th, td, tr { display: block; }
+    thead { display: none; }
+    tr {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      padding: 12px;
+      position: relative;
+    }
+    tr.row-sleep { border-left: 3px solid var(--sleep); }
+    tr.row-finish { border-left: 3px solid var(--finish); }
+    tr.row-current { border-left: 3px solid var(--accent); }
+    td { padding: 3px 0; border: none; font-size: 13px; }
+    td:first-child { position: absolute; top: 12px; right: 12px; color: var(--muted); font-size: 11px; }
+    td:nth-child(4) { margin-bottom: 4px; }
+
+    /* Grids: single column */
+    .strategy-grid { grid-template-columns: 1fr; padding: 10px; gap: 10px; }
+    .food-grid { grid-template-columns: 1fr; padding: 10px; gap: 10px; }
+    .sleep-cards { grid-template-columns: 1fr; padding: 10px; gap: 10px; }
+    .em-grid { grid-template-columns: 1fr; }
+    .emergency-section { padding: 10px; }
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .pulse { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+  .section-empty { padding: 20px; color: var(--muted); font-size: 13px; }
 </style>
 </head>
 <body>
 
-<div class="hero">
-  <div class="badge">🇰🇷 Korea Randonneuring · 2026</div>
-  <h1>SHS <span>1200K</span></h1>
-  <div class="hero-sub">SUPER HIGHWAY SERIA · FULL COURSE · RACE PLANNER</div>
-  <div class="hero-stats">
-    <div class="si"><div class="sv">1,199</div><div class="sl">Total km</div></div>
-    <div class="si"><div class="sv" style="color:var(--gold)">9,396</div><div class="sl">Elevation m</div></div>
-    <div class="si"><div class="sv" style="color:var(--blue)">85h</div><div class="sl">完賽目標</div></div>
-    <div class="si"><div class="sv" style="color:var(--purple)">3</div><div class="sl">住宿點</div></div>
-    <div class="si"><div class="sv" style="color:var(--muted)">90h</div><div class="sl">Official Cutoff</div></div>
+<div class="header">
+  <div class="header-title">
+    <div class="logo">🚴</div>
+    <div class="title-text">
+      <h1>SHS 1200K Korea 賽事指揮官</h1>
+      <p>2026 · 6月6日 06:00 出發 · 目標85小時完賽</p>
+    </div>
+  </div>
+  <div class="header-stats">
+    <div class="stat-pill">
+      <span class="label">總距離</span>
+      <span class="val">1,199 km</span>
+    </div>
+    <div class="stat-pill">
+      <span class="label">官方關門</span>
+      <span class="val">90 HR</span>
+    </div>
+    <div class="stat-pill">
+      <span class="label">目標85h</span>
+      <span class="val">85 HR</span>
+    </div>
+    <div class="stat-pill">
+      <span class="label">均速</span>
+      <span class="val">~20 km/h</span>
+    </div>
   </div>
 </div>
 
-<div class="wrap">
+<div class="tracker-bar">
+  <span class="tracker-label">📡 GPS 追蹤</span>
+  <div class="gps-status">
+    <div class="gps-dot" id="gpsDot"></div>
+    <span id="gpsStatusText" style="font-size:12px;color:var(--muted)">未啟動</span>
+  </div>
+  <button class="btn btn-primary" onclick="startGPS()">啟動定位</button>
+  <button class="btn btn-secondary" onclick="stopGPS()">停止</button>
+  <span id="gpsCoords" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted)"></span>
+  <span id="gpsDist" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--accent3);margin-left:auto;"></span>
+</div>
 
-  <!-- ═══ MAP SECTION ═══ -->
-  <div class="sh"><h2>即時路線地圖</h2><span class="stag">Live Route Map</span></div>
+<div class="main">
+  <div id="map"></div>
 
-  <div id="map-section">
-    <div class="map-header">
-      <h3>🗺 SHS 1200K · Korea Full Route</h3>
-      <button id="locate-btn" onclick="startLocating()">
-        <span>📍</span> 定位我的位置
-      </button>
+  <div class="progress-panel">
+    <div class="panel-title">⏱ 賽程進度面板</div>
+
+    <div class="time-budget">
+      <div class="budget-row">
+        <span class="budget-label">賽程進度</span>
+        <span class="budget-val" id="pctDone">0%</span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="mainProgressBar" style="width:0%"></div>
+      </div>
+      <div class="budget-row">
+        <span class="budget-label">已騎距離</span>
+        <span class="budget-val" id="riddenKm" style="color:var(--accent3)">0 km</span>
+      </div>
+      <div class="budget-row">
+        <span class="budget-label">剩餘距離</span>
+        <span class="budget-val" id="remainKm" style="color:var(--accent2)">1,199 km</span>
+      </div>
     </div>
-    <div id="map"></div>
-    <div class="map-footer">
-      <div id="status-card">
-        <div class="status-grid">
-          <div class="status-item">
-            <div class="status-val" id="sv-dist" style="color:var(--accent)">—</div>
-            <div class="status-lbl">目前里程 km</div>
-          </div>
-          <div class="status-item">
-            <div class="status-val" id="sv-remain" style="color:var(--gold)">—</div>
-            <div class="status-lbl">剩餘距離 km</div>
-          </div>
-          <div class="status-item">
-            <div class="status-val" id="sv-next-dist" style="color:var(--blue)">—</div>
-            <div class="status-lbl">至下一CP km</div>
-          </div>
-          <div class="status-item">
-            <div class="status-val" id="sv-next-eta" style="color:var(--green)">—</div>
-            <div class="status-lbl">預計抵達時間</div>
-          </div>
+
+    <div class="time-budget">
+      <div class="panel-title" style="margin-bottom:8px">🕐 時間預算</div>
+      <div class="budget-row">
+        <span class="budget-label">出發時間</span>
+        <span class="budget-val time-mono" style="color:var(--accent2)">06/06 06:00</span>
+      </div>
+      <div class="budget-row">
+        <span class="budget-label">目標85h</span>
+        <span class="budget-val time-mono" style="color:var(--accent3)">06/09 19:00</span>
+      </div>
+      <div class="budget-row">
+        <span class="budget-label">官方關門</span>
+        <span class="budget-val time-mono" style="color:var(--warn)">06/10 00:00</span>
+      </div>
+      <div class="time-remaining" id="timeRemainingBox">
+        <div class="big" id="timeRemaining">100:00</div>
+        <div class="sub">距目標85h剩餘時間</div>
+      </div>
+    </div>
+
+    <div class="next-cp-card" id="nextCpCard">
+      <div class="cp-name" id="nextCpName">下一站：起點 하남 미사리</div>
+      <div class="cp-dist" id="nextCpDist">距離：0 km | 預計出發：06/06 06:00</div>
+      <div class="cp-times">
+        <div class="cp-time-box ok">
+          <div class="t-label">預計到達</div>
+          <div class="t-val" id="nextCpETA">--:--</div>
         </div>
-        <div id="next-cp-bar">
-          <div class="ncp-header">
-            <div>
-              <span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;">下一補給點</span>
-              <div class="ncp-name" id="ncp-name">—</div>
-            </div>
-            <div class="ncp-detail" id="ncp-detail">—</div>
-          </div>
-          <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-          <div style="display:flex;justify-content:space-between;margin-top:4px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);">
-            <span id="prev-cp-name">起點</span>
-            <span id="ncp-pct">0%</span>
-            <span id="ncp-name2">—</span>
-          </div>
+        <div class="cp-time-box warn">
+          <div class="t-label">關門時間</div>
+          <div class="t-val" id="nextCpCutoff">--:--</div>
         </div>
       </div>
-      <div id="gps-status">點擊「定位我的位置」以啟用 GPS 追蹤</div>
+      <div class="buffer-row">
+        <span style="color:var(--muted);font-size:11px">緩衝時間</span>
+        <span class="buffer-good" id="nextCpBuffer">計算中...</span>
+      </div>
     </div>
   </div>
 
-  <!-- TABLE -->
-  <div class="sh"><h2>賽事行程表</h2><span class="stag">Race Schedule</span></div>
-  <div class="info">
-    <span class="ic">ℹ️</span>
-    <span>
-      配速假設：有效均速 <strong>20 km/h</strong>（平路 25 + 爬坡 12–15 折算）· 補給停留 <strong>10min</strong> · 午餐 <strong>30min</strong>。
-      住宿規則：#1 &amp; #3 凌晨 <strong>03:00 出發</strong>；#2（菀島）<strong>05:00 出發</strong>。目標完賽 <strong>06/09 19:00（85h）</strong>。
-    </span>
-  </div>
-
-  <div class="tw">
-    <table>
-      <thead>
-        <tr><th>Day</th><th>距離</th><th>地點</th><th>預計抵達</th><th>出發時間</th><th>累計時數</th><th>性質</th><th>導航</th></tr>
-      </thead>
-      <tbody>
-        <tr class="rs">
-          <td><span class="day d1">D1</span></td><td><span class="dist dn">0 km</span></td>
-          <td><div class="nz">🚩 起點 하남 미사리</div><div class="ne">Start · Hanam Misari</div></td>
-          <td><div class="tm">06/06 06:00</div></td><td><div class="tm" style="color:var(--accent)">06:00</div></td>
-          <td><div class="tm">0h</div></td><td><span class="tag tst">🚩 出發</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/하남미사리경정공원" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=37.5451,127.1192" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=하남미사리" target="_blank">Kakao</a></div></td>
-        </tr>
-        <tr><td><span class="day d1">D1</span></td><td><span class="dist dn">50 km</span></td>
-          <td><div class="nz">이천 (Icheon)</div><div class="ne">Icheon City</div></td>
-          <td><div class="tm">06/06 08:30</div></td><td><div class="ts">+10min → 08:40</div></td>
-          <td><div class="tm">2.7h</div></td><td><span class="tag ts2">補給</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/이천시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=37.27,127.44" target="_blank">Google</a></div></td>
-        </tr>
-        <tr><td><span class="day d1">D1</span></td><td><span class="dist dn">100 km</span></td>
-          <td><div class="nz">음성 (Eumseong)</div><div class="ne">Eumseong County</div></td>
-          <td><div class="tm">06/06 11:10</div></td><td><div class="ts">+10min → 11:20</div></td>
-          <td><div class="tm">5.3h</div></td><td><span class="tag ts2">補給</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/음성군" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=37.193,127.746" target="_blank">Google</a></div></td>
-        </tr>
-        <tr><td><span class="day d1">D1</span></td><td><span class="dist dn">160 km</span></td>
-          <td><div class="nz">청주 (Cheongju)</div><div class="ne">Cheongju City</div></td>
-          <td><div class="tm">06/06 14:20</div></td><td><div class="ts">+30min → 14:50</div></td>
-          <td><div class="tm">8.8h</div></td><td><span class="tag tl">🍱 午餐</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/청주시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=36.64,127.49" target="_blank">Google</a></div></td>
-        </tr>
-        <tr><td><span class="day d1">D1</span></td><td><span class="dist dn">220 km</span></td>
-          <td><div class="nz">대전 (Daejeon)</div><div class="ne">Daejeon · CP1</div></td>
-          <td><div class="tm">06/06 17:50</div></td><td><div class="ts">+10min → 18:00</div></td>
-          <td><div class="tm">12.0h</div></td><td><span class="tag tc">📍 CP1</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/대전시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=36.35,127.39" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=대전" target="_blank">Kakao</a></div></td>
-        </tr>
-        <tr><td><span class="day d1">D1</span></td><td><span class="dist dn">280 km</span></td>
-          <td><div class="nz">논산 (Nonsan)</div><div class="ne">Nonsan City</div></td>
-          <td><div class="tm">06/06 21:00</div></td><td><div class="ts">+10min → 21:10</div></td>
-          <td><div class="tm">15.2h</div></td><td><span class="tag ts2">補給</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/논산시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=36.19,127.08" target="_blank">Google</a></div></td>
-        </tr>
-        <tr class="rsl"><td><span class="day d1">D1→D2</span></td><td><span class="dist ds">340 km</span></td>
-          <td><div class="nz">🛏 익산 住宿點 #1</div><div class="ne">Iksan · Sleep Stop #1</div><div class="hb">🏨 H大道飯店 · H Avenue Hotel</div></td>
-          <td><div class="tm">06/07 00:10</div></td>
-          <td><div class="tm" style="color:#a78bfa">03:00 出發<br><span class="ts" style="color:var(--muted)">睡眠約 2h50min</span></div></td>
-          <td><div class="tm" style="color:var(--purple)">21.0h</div></td><td><span class="tag tsl">🛏 住宿</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/익산+H대로호텔" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=35.9482,126.9579" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=익산+H대로호텔" target="_blank">Kakao</a></div></td>
-        </tr>
-        <tr><td><span class="day d2">D2</span></td><td><span class="dist dn">390 km</span></td>
-          <td><div class="nz">김제 (Gimje)</div><div class="ne">Gimje City</div></td>
-          <td><div class="tm">06/07 05:30</div></td><td><div class="ts">+30min → 06:00</div></td>
-          <td><div class="tm">24.0h</div></td><td><span class="tag tl">🍱 午餐</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/김제시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=35.80,126.89" target="_blank">Google</a></div></td>
-        </tr>
-        <tr><td><span class="day d2">D2</span></td><td><span class="dist dn">450 km</span></td>
-          <td><div class="nz">광주 (Gwangju)</div><div class="ne">Gwangju · CP2</div></td>
-          <td><div class="tm">06/07 09:00</div></td><td><div class="ts">+10min → 09:10</div></td>
-          <td><div class="tm">27.2h</div></td><td><span class="tag tc">📍 CP2</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/광주광역시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=35.16,126.85" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=광주" target="_blank">Kakao</a></div></td>
-        </tr>
-        <tr><td><span class="day d2">D2</span></td><td><span class="dist dn">500 km</span></td>
-          <td><div class="nz">나주 (Naju)</div><div class="ne">Naju City</div></td>
-          <td><div class="tm">06/07 11:40</div></td><td><div class="ts">+10min → 11:50</div></td>
-          <td><div class="tm">29.8h</div></td><td><span class="tag ts2">補給</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/나주시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=34.98,126.71" target="_blank">Google</a></div></td>
-        </tr>
-        <tr><td><span class="day d2">D2</span></td><td><span class="dist dn">560 km</span></td>
-          <td><div class="nz">목포 (Mokpo)</div><div class="ne">Mokpo · CP3</div></td>
-          <td><div class="tm">06/07 14:50</div></td><td><div class="ts">+30min → 15:20</div></td>
-          <td><div class="tm">33.3h</div></td><td><span class="tag tc">📍 CP3 🍱</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/목포시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=34.81,126.39" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=목포" target="_blank">Kakao</a></div></td>
-        </tr>
-        <tr class="rsl"><td><span class="day d2">D2→D3</span></td><td><span class="dist ds">640 km</span></td>
-          <td><div class="nz">🛏 완도 住宿點 #2</div><div class="ne">Wando County · Sleep Stop #2</div><div class="hb">🏨 菀島內西亞飯店 · Wando Nesia Hotel</div></td>
-          <td><div class="tm">06/07 19:20</div></td>
-          <td><div class="tm" style="color:#a78bfa">05:00 出發<br><span class="ts" style="color:var(--muted)">睡眠約 9h40min ✓</span></div></td>
-          <td><div class="tm" style="color:var(--purple)">47.0h</div></td><td><span class="tag tsl">🛏 住宿</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/완도+네시아호텔" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=34.3144,126.7547" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=완도+네시아호텔" target="_blank">Kakao</a></div></td>
-        </tr>
-        <tr><td><span class="day d3">D3</span></td><td><span class="dist dn">700 km</span></td>
-          <td><div class="nz">보성 (Boseong)</div><div class="ne">Boseong · Tea Fields</div></td>
-          <td><div class="tm">06/08 08:00</div></td><td><div class="ts">+10min → 08:10</div></td>
-          <td><div class="tm">50.2h</div></td><td><span class="tag ts2">補給</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/보성군" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=34.77,127.08" target="_blank">Google</a></div></td>
-        </tr>
-        <tr><td><span class="day d3">D3</span></td><td><span class="dist dn">760 km</span></td>
-          <td><div class="nz">순천 (Suncheon)</div><div class="ne">Suncheon City</div></td>
-          <td><div class="tm">06/08 11:10</div></td><td><div class="ts">+30min → 11:40</div></td>
-          <td><div class="tm">53.7h</div></td><td><span class="tag tl">🍱 午餐</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/순천시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=34.95,127.49" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=순천" target="_blank">Kakao</a></div></td>
-        </tr>
-        <tr><td><span class="day d3">D3</span></td><td><span class="dist dn">820 km</span></td>
-          <td><div class="nz">남원 (Namwon)</div><div class="ne">Namwon · Jirisan Base</div></td>
-          <td><div class="tm">06/08 14:40</div></td><td><div class="ts">+10min → 14:50</div></td>
-          <td><div class="tm">56.8h</div></td><td><span class="tag ts2">補給</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/남원시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=35.41,127.39" target="_blank">Google</a></div></td>
-        </tr>
-        <tr><td><span class="day d3">D3</span></td><td><span class="dist dn">880 km</span></td>
-          <td><div class="nz">전주 (Jeonju)</div><div class="ne">Jeonju · CP4</div></td>
-          <td><div class="tm">06/08 17:50</div></td><td><div class="ts">+10min → 18:00</div></td>
-          <td><div class="tm">60.0h</div></td><td><span class="tag tc">📍 CP4</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/전주시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=35.82,127.15" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=전주" target="_blank">Kakao</a></div></td>
-        </tr>
-        <tr class="rsl"><td><span class="day d3">D3→D4</span></td><td><span class="dist ds">940 km</span></td>
-          <td><div class="nz">🛏 익산 住宿點 #3</div><div class="ne">Iksan · Sleep Stop #3</div><div class="hb">🏨 H大道飯店 · H Avenue Hotel</div></td>
-          <td><div class="tm">06/08 21:00</div></td>
-          <td><div class="tm" style="color:#a78bfa">03:00 出發<br><span class="ts" style="color:var(--muted)">睡眠約 6h</span></div></td>
-          <td><div class="tm" style="color:var(--purple)">69.0h</div></td><td><span class="tag tsl">🛏 住宿</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/익산+H대로호텔" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=35.9482,126.9579" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=익산+H대로호텔" target="_blank">Kakao</a></div></td>
-        </tr>
-        <tr><td><span class="day d4">D4</span></td><td><span class="dist dn">1000 km</span></td>
-          <td><div class="nz">공주 (Gongju)</div><div class="ne">Gongju City</div></td>
-          <td><div class="tm">06/09 06:00</div></td><td><div class="ts">+30min → 06:30</div></td>
-          <td><div class="tm">72.5h</div></td><td><span class="tag tl">🍱 午餐</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/공주시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=36.45,127.12" target="_blank">Google</a></div></td>
-        </tr>
-        <tr><td><span class="day d4">D4</span></td><td><span class="dist dn">1060 km</span></td>
-          <td><div class="nz">천안 (Cheonan)</div><div class="ne">Cheonan City</div></td>
-          <td><div class="tm">06/09 09:30</div></td><td><div class="ts">+10min → 09:40</div></td>
-          <td><div class="tm">75.7h</div></td><td><span class="tag ts2">補給</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/천안시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=36.81,127.15" target="_blank">Google</a></div></td>
-        </tr>
-        <tr><td><span class="day d4">D4</span></td><td><span class="dist dn">1120 km</span></td>
-          <td><div class="nz">수원 (Suwon)</div><div class="ne">Suwon City</div></td>
-          <td><div class="tm">06/09 12:40</div></td><td><div class="ts">+10min → 12:50</div></td>
-          <td><div class="tm">78.8h</div></td><td><span class="tag ts2">補給</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/수원시" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=37.26,127.00" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=수원" target="_blank">Kakao</a></div></td>
-        </tr>
-        <tr class="rf"><td><span class="day d4">D4</span></td><td><span class="dist df">1199 km</span></td>
-          <td><div class="nz">🏁 終點 하남 미사리</div><div class="ne">Finish · Hanam Misari</div></td>
-          <td><div class="tm" style="color:var(--green)">06/09 19:00</div></td>
-          <td><div class="ts" style="color:var(--green)">目標達成 ✓</div></td>
-          <td><div class="tm" style="color:var(--green)">85h 🏆</div></td><td><span class="tag tf">🏆 完賽</span></td>
-          <td><div class="navs"><a class="nav nv" href="https://map.naver.com/v5/search/하남미사리경정공원" target="_blank">Naver</a><a class="nav gg" href="https://maps.google.com/?q=37.54568,127.12043" target="_blank">Google</a><a class="nav kk" href="https://map.kakao.com/?q=하남미사리" target="_blank">Kakao</a></div></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- BUDGET -->
-  <div class="sh"><h2>時間分配</h2><span class="stag">85h Budget</span></div>
-  <div class="bc">
-    <div class="bl">85小時完賽目標分解</div>
-    <div class="sb">
-      <div class="seg" style="flex:60;background:linear-gradient(90deg,var(--accent),#ff7849)"></div>
-      <div class="seg" style="flex:18;background:var(--sleep)"></div>
-      <div class="seg" style="flex:4;background:var(--gold)"></div>
-      <div class="seg" style="flex:3;background:rgba(255,255,255,.07)"></div>
+  <div class="bottom-section">
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('schedule', this)">📋 行程表</div>
+      <div class="tab" onclick="showTab('sleep', this)">🛌 住宿計畫</div>
+      <div class="tab" onclick="showTab('strategy', this)">⚡ 配速策略</div>
+      <div class="tab" onclick="showTab('food', this)">🍱 補給美食</div>
+      <div class="tab" onclick="showTab('emergency', this)">🚨 應急方案</div>
     </div>
-    <div class="bleg">
-      <div class="leg"><div class="ld" style="background:var(--accent)"></div>騎行 ~60h（均速 20 km/h）</div>
-      <div class="leg"><div class="ld" style="background:var(--sleep)"></div>睡眠 ~18h（#1: 2h50m · #2: 9h40m · #3: 6h）</div>
-      <div class="leg"><div class="ld" style="background:var(--gold)"></div>補給停留 ~4h</div>
-      <div class="leg"><div class="ld" style="background:rgba(255,255,255,.1)"></div>官方90h關門餘裕 5h</div>
+
+    <!-- SCHEDULE TAB -->
+    <div id="tab-schedule" class="tab-content active">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Day</th><th>距離</th><th>地點</th><th>預計抵達</th><th>停留</th><th>累計時數</th><th>類型</th><th>導航</th>
+            </tr>
+          </thead>
+          <tbody id="scheduleTable"></tbody>
+        </table>
+      </div>
     </div>
-    <div class="bn">
-      <div class="bni"><div class="bnv" style="color:var(--accent)">1,199</div><div class="bnl">Total km</div></div>
-      <div class="bni"><div class="bnv" style="color:var(--gold)">9,396</div><div class="bnl">Elevation m</div></div>
-      <div class="bni"><div class="bnv" style="color:var(--blue)">20</div><div class="bnl">Eff. km/h</div></div>
-      <div class="bni"><div class="bnv" style="color:var(--purple)">~18h</div><div class="bnl">Total Sleep</div></div>
-      <div class="bni"><div class="bnv" style="color:var(--green)">85h</div><div class="bnl">目標完賽</div></div>
-      <div class="bni"><div class="bnv" style="color:var(--muted)">+5h</div><div class="bnl">官方關門餘裕</div></div>
+
+    <!-- SLEEP TAB -->
+    <div id="tab-sleep" class="tab-content">
+      <div class="sleep-cards" id="sleepCards"></div>
+    </div>
+
+    <!-- STRATEGY TAB -->
+    <div id="tab-strategy" class="tab-content">
+      <div class="strategy-grid" id="strategyGrid"></div>
+    </div>
+
+    <!-- FOOD TAB -->
+    <div id="tab-food" class="tab-content">
+      <div class="food-grid" id="foodGrid"></div>
+    </div>
+
+    <!-- EMERGENCY TAB -->
+    <div id="tab-emergency" class="tab-content">
+      <div class="emergency-section" id="emergencySection"></div>
     </div>
   </div>
-
-  <!-- STRATEGY -->
-  <div class="sh"><h2>配速策略</h2><span class="stag">Race Strategy</span></div>
-  <div class="tg">
-    <div class="tip">
-      <h3 style="color:var(--accent)">⚡ 配速基準</h3>
-      <ul>
-        <li>平路巡航目標：<strong>25 km/h</strong></li>
-        <li>爬坡（FTP/W 2.5–3）：<strong>12–15 km/h</strong></li>
-        <li>計算用有效均速：<strong>20 km/h</strong></li>
-        <li>每掉 1 km/h ≈ 多花 <strong>+3h</strong></li>
-        <li>D3（760–940km）爬升最密集，提前保留腿力</li>
-      </ul>
-    </div>
-    <div class="tip">
-      <h3 style="color:var(--gold)">🚨 應急預案</h3>
-      <ul>
-        <li>落後 30min → 補給縮為 <strong>5min</strong></li>
-        <li>落後 60min → 午餐改邊騎邊吃，省 <strong>20min</strong></li>
-        <li>落後 90min → <strong>縮短住宿睡眠 1h</strong>，提早出發</li>
-        <li>下坡衝 <strong>35–40 km/h</strong> 主動補回時間</li>
-        <li>目標本身無緩衝，<strong>每站必須嚴守停留時間</strong></li>
-      </ul>
-    </div>
-    <div class="tip">
-      <h3 style="color:var(--green)">🗺 韓國導航</h3>
-      <ul>
-        <li><strong>Naver Map</strong>：最準確，有自行車坡度預覽</li>
-        <li><strong>KakaoMap</strong>：查即時路況、便利店</li>
-        <li>Google Maps 韓國導航功能受限，僅作備用</li>
-        <li>建議下載 <strong>Komoot</strong> 離線路線備用</li>
-        <li>路線：<a href="http://ridewithgps.com/routes/54047138" target="_blank" style="color:var(--accent)">RideWithGPS #54047138</a></li>
-      </ul>
-    </div>
-    <div class="tip">
-      <h3 style="color:var(--purple)">🍜 補碳美食</h3>
-      <ul>
-        <li><strong>전주 콩나물국밥</strong>：全州豆芽湯飯，補鈉</li>
-        <li><strong>목포 낙지볼음</strong>：目浦炒章魚，高蛋白</li>
-        <li><strong>돼지국밥</strong>：豬肉湯飯，熱量密度高</li>
-        <li><strong>짜장면</strong>：炸醬麵，快速補充碳水</li>
-        <li>完賽慶祝：<strong>삼겹살</strong> 烤五花肉 🎉</li>
-      </ul>
-    </div>
-  </div>
-
 </div>
 
-<footer>
-  <div class="wrap">
-    SHS 1200K Korea · Race Planner ·
-    <a href="http://ridewithgps.com/routes/54047138" target="_blank">RideWithGPS #54047138</a> ·
-    出發 2026/06/06 06:00 · 目標完賽 85h · 官方關門 90h
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-bottom-nav" id="mobileNav">
+  <div class="mob-tab active" onclick="showTab('schedule', this)">
+    <span class="mob-icon">📋</span>
+    <span>時間表</span>
   </div>
-</footer>
+  <div class="mob-tab" onclick="showTab('sleep', this)">
+    <span class="mob-icon">🛌</span>
+    <span>住宿</span>
+  </div>
+  <div class="mob-tab" onclick="showTab('strategy', this)">
+    <span class="mob-icon">⚡</span>
+    <span>策略</span>
+  </div>
+  <div class="mob-tab" onclick="showTab('food', this)">
+    <span class="mob-icon">🍱</span>
+    <span>美食</span>
+  </div>
+  <div class="mob-tab" onclick="showTab('emergency', this)">
+    <span class="mob-icon">🚨</span>
+    <span>應急</span>
+  </div>
+</nav>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// ══════════════════════════════════════════
-// ROUTE DATA (embedded from KML)
-// ══════════════════════════════════════════
-const ROUTE_COORDS = [[37.545104, 127.119165], [37.545886, 127.11999], [37.547162, 127.120464], [37.548421, 127.120905], [37.549684, 127.121357], [37.550975, 127.121846], [37.552258, 127.122328], [37.553531, 127.122835], [37.554736, 127.123543], [37.561398, 127.12761], [37.565017, 127.132281], [37.565772, 127.133626], [37.567019, 127.141898], [37.566897, 127.143591], [37.566776, 127.145249], [37.566692, 127.146944], [37.566781, 127.148578], [37.570558, 127.157778], [37.579273, 127.178929], [37.582958, 127.18929], [37.582645, 127.19712], [37.582002, 127.19854], [37.581096, 127.199663], [37.580206, 127.200941], [37.579268, 127.202067], [37.578234, 127.203156], [37.577202, 127.204239], [37.576168, 127.205331], [37.575134, 127.206421], [37.573984, 127.207291], [37.572831, 127.208173], [37.571688, 127.20907], [37.570564, 127.209928], [37.569372, 127.21072], [37.568179, 127.211512], [37.56696, 127.212116], [37.565712, 127.212646], [37.56443, 127.213159], [37.563169, 127.213663], [37.561885, 127.214176], [37.560603, 127.214692], [37.55932, 127.215211], [37.558073, 127.215714], [37.556788, 127.216217], [37.555499, 127.216719], [37.554244, 127.217229], [37.55301, 127.217757], [37.55176, 127.218239], [37.550447, 127.21856], [37.548917, 127.218544], [37.543408, 127.236713], [37.542454, 127.238448], [37.542783, 127.236806], [37.543461, 127.235345], [37.544536, 127.236064], [37.545516, 127.237229], [37.546449, 127.23838], [37.54736, 127.239631], [37.547242, 127.241026], [37.546406, 127.242155], [37.541886, 127.252278], [37.534163, 127.265641], [37.528538, 127.284658], [37.526278, 127.299068], [37.543668, 127.302538], [37.54927, 127.321478], [37.546549, 127.326587], [37.545877, 127.32806], [37.544888, 127.33075], [37.537108, 127.354998], [37.525918, 127.37218], [37.525068, 127.371831], [37.522753, 127.373775], [37.522595, 127.375184], [37.521599, 127.376064], [37.520513, 127.376961], [37.510748, 127.38269], [37.516038, 127.401059], [37.516945, 127.403227], [37.517563, 127.40623], [37.517006, 127.409351], [37.514328, 127.416998], [37.514711, 127.436325], [37.514255, 127.43784], [37.513453, 127.439152], [37.512731, 127.440521], [37.51025, 127.44413], [37.511289, 127.44731], [37.511276, 127.44923], [37.511021, 127.449961], [37.509793, 127.45097], [37.507825, 127.452055], [37.507023, 127.453292], [37.506368, 127.454742], [37.50538, 127.46108], [37.502925, 127.474124], [37.502422, 127.475259], [37.497831, 127.485477], [37.495511, 127.483429], [37.495406, 127.484606], [37.49017, 127.48776], [37.48559, 127.492509], [37.469689, 127.49796], [37.45132, 127.505959], [37.441626, 127.509892], [37.441494, 127.521008], [37.437649, 127.525759], [37.43225, 127.532609], [37.42568, 127.534679], [37.40638, 127.543439], [37.402125, 127.544969], [37.38846, 127.55137], [37.38033, 127.54941], [37.35581, 127.58253], [37.334739, 127.611029], [37.326243, 127.604856], [37.310939, 127.61381], [37.301085, 127.618081], [37.29914, 127.63248], [37.297635, 127.637551], [37.297142, 127.639038], [37.296608, 127.640534], [37.296083, 127.641672], [37.295386, 127.643033], [37.28704, 127.659979], [37.279044, 127.669632], [37.278014, 127.670509], [37.276918, 127.671437], [37.27137, 127.67945], [37.254489, 127.67582], [37.253449, 127.691328], [37.252209, 127.69185], [37.251324, 127.692965], [37.241771, 127.700743], [37.240859, 127.701948], [37.24384, 127.714949], [37.24619, 127.715789], [37.247335, 127.715966], [37.246833, 127.717414], [37.246037, 127.719284], [37.242642, 127.744516], [37.241226, 127.751773], [37.241333, 127.750301], [37.240305, 127.749371], [37.239028, 127.749075], [37.238135, 127.748167], [37.236841, 127.748138], [37.235518, 127.748014], [37.234185, 127.748094], [37.232865, 127.748049], [37.231545, 127.747966], [37.230202, 127.747919], [37.229337, 127.748982], [37.22837, 127.750068], [37.227196, 127.750853], [37.225944, 127.751415], [37.224641, 127.751738], [37.223312, 127.751863], [37.221976, 127.75184], [37.220634, 127.751691], [37.219391, 127.751301], [37.218134, 127.750721], [37.216897, 127.750158], [37.215629, 127.749585], [37.214389, 127.749023], [37.213122, 127.748448], [37.211891, 127.747899], [37.210619, 127.747343], [37.209367, 127.746946], [37.208092, 127.746933], [37.206812, 127.747168], [37.171249, 127.75472], [37.164409, 127.75948], [37.154009, 127.770919], [37.12547, 127.79611], [37.112459, 127.80692], [37.10134, 127.815599], [37.09344, 127.807319], [37.08818, 127.804], [37.078249, 127.82619], [37.07775, 127.84062], [37.07114, 127.865489], [37.047837, 127.866933], [37.03203, 127.854671], [37.01686, 127.86466], [37.00343, 127.87406], [36.99557, 127.87926], [36.990236, 127.885856], [36.987555, 127.885661], [36.97483, 127.88522], [36.96151, 127.88197], [36.94847, 127.88781], [36.944185, 127.875848], [36.94234, 127.86905], [36.93639, 127.86056], [36.92714, 127.85714], [36.92423, 127.85952], [36.917738, 127.861059], [36.916411, 127.86078], [36.914427, 127.8626], [36.914118, 127.864216], [36.913141, 127.866276], [36.90425, 127.86752], [36.90468, 127.86196], [36.89727, 127.85832], [36.88906, 127.84655], [36.870162, 127.854401], [36.86701, 127.86478], [36.84364, 127.88222], [36.83696, 127.86178], [36.8299, 127.84604], [36.81841, 127.82662], [36.809824, 127.810791], [36.80729, 127.80791], [36.809676, 127.793158], [36.808559, 127.79258], [36.807334, 127.791942], [36.80302, 127.79115], [36.78561, 127.78817], [36.767461, 127.794962], [36.76418, 127.79754], [36.75524, 127.81445], [36.744084, 127.812385], [36.73339, 127.80992], [36.71108, 127.80521], [36.70073, 127.80825], [36.68854, 127.79766], [36.68552, 127.77734], [36.67541, 127.75857], [36.66467, 127.74356], [36.658937, 127.73802], [36.657801, 127.737116], [36.6518, 127.72971], [36.64246, 127.72459], [36.62987, 127.72451], [36.62112, 127.72505], [36.61331, 127.72443], [36.60265, 127.72377], [36.59004, 127.72885], [36.573651, 127.729128], [36.57232, 127.728913], [36.570261, 127.725747], [36.56938, 127.724862], [36.56654, 127.72393], [36.552896, 127.732392], [36.551956, 127.733273], [36.551025, 127.732192], [36.550448, 127.730823], [36.54457, 127.72648], [36.536283, 127.716226], [36.52873, 127.72209], [36.500191, 127.716818], [36.498923, 127.717385], [36.497651, 127.717507], [36.496329, 127.717452], [36.494982, 127.717482], [36.489227, 127.717697], [36.48788, 127.71774], [36.486533, 127.717783], [36.485225, 127.717839], [36.483879, 127.717898], [36.482668, 127.718309], [36.482256, 127.717099], [36.481802, 127.715619], [36.481153, 127.714195], [36.480687, 127.712674], [36.480303, 127.711139], [36.47993, 127.709571], [36.479563, 127.708007], [36.479184, 127.706491], [36.478634, 127.705167], [36.47562, 127.70315], [36.46458, 127.70418], [36.45492, 127.69809], [36.44019, 127.69861], [36.43467, 127.69168], [36.42684, 127.68195], [36.41962, 127.67251], [36.40807, 127.66948], [36.395127, 127.668318], [36.394806, 127.666728], [36.394516, 127.665097], [36.3939, 127.66015], [36.379309, 127.6509], [36.378209, 127.650362], [36.376957, 127.649929], [36.375794, 127.649105], [36.374681, 127.648186], [36.373634, 127.647174], [36.372579, 127.646219], [36.371489, 127.645234], [36.3704, 127.644249], [36.369406, 127.643192], [36.368689, 127.641841], [36.368451, 127.640225], [36.368619, 127.638617], [36.37295, 127.62701], [36.374328, 127.626199], [36.374757, 127.624707], [36.374822, 127.623098], [36.372129, 127.617936], [36.371335, 127.616682], [36.369049, 127.61474], [36.3656, 127.60846], [36.35607, 127.59396], [36.34459, 127.58993], [36.33198, 127.58797], [36.323413, 127.586286], [36.32235, 127.58543], [36.32154, 127.58412], [36.320698, 127.582882], [36.319739, 127.582316], [36.318656, 127.583101], [36.317418, 127.582883], [36.316233, 127.583515], [36.315581, 127.582921], [36.31353, 127.575], [36.30676, 127.55429], [36.29988, 127.53859], [36.28697, 127.52781], [36.27608, 127.52859], [36.25397, 127.5114], [36.24397, 127.51024], [36.2278, 127.50521], [36.226038, 127.503465], [36.224973, 127.502592], [36.224332, 127.502418], [36.22319, 127.503305], [36.222048, 127.504191], [36.21401, 127.49496], [36.20845, 127.486979], [36.208191, 127.485783], [36.207158, 127.484727], [36.206133, 127.483674], [36.205121, 127.482627], [36.204076, 127.48173], [36.199278, 127.478414], [36.198145, 127.4776], [36.193494, 127.475934], [36.192459, 127.474865], [36.18791, 127.46032], [36.17323, 127.43305], [36.16253, 127.40709], [36.16117, 127.39725], [36.159436, 127.397329], [36.153607, 127.385707], [36.15316, 127.384152], [36.152252, 127.383138], [36.151318, 127.382238], [36.150739, 127.380753], [36.149826, 127.379605], [36.14928, 127.37042], [36.15547, 127.3589], [36.16537, 127.34514], [36.16209, 127.32455], [36.16559, 127.30424], [36.16036, 127.2829], [36.15987, 127.26862], [36.16085, 127.26806], [36.15788, 127.26656], [36.1477, 127.25089], [36.13689, 127.23553], [36.12729, 127.22119], [36.11958, 127.19292], [36.13153, 127.17914], [36.13524, 127.16388], [36.131658, 127.146281], [36.124543, 127.130921], [36.11895, 127.12255], [36.128616, 127.103262], [36.129356, 127.101919], [36.130054, 127.100511], [36.129761, 127.09986], [36.128432, 127.099738], [36.127294, 127.098895], [36.125978, 127.098643], [36.124685, 127.098372], [36.123429, 127.097937], [36.122177, 127.098283], [36.104656, 127.097701], [36.100009, 127.093307], [36.09169, 127.09103], [36.075819, 127.08971], [36.07459, 127.089068], [36.073526, 127.087668], [36.065637, 127.082589], [36.064534, 127.081669], [36.063577, 127.080497], [36.062628, 127.079313], [36.061893, 127.077965], [36.064345, 127.069062], [36.063462, 127.0679], [36.05989, 127.06048], [36.04332, 127.04491], [36.04566, 127.01876], [36.04144, 127.01472], [36.0298, 127.00828], [36.024655, 126.991257], [36.023737, 126.990089], [36.023207, 126.986664], [36.022098, 126.982913], [36.021961, 126.981392], [36.022153, 126.980104], [36.022791, 126.97876], [36.027042, 126.961916], [36.02244, 126.95666], [36.009666, 126.949405], [36.008957, 126.948166], [36.00862, 126.946641], [36.008013, 126.94533], [36.006887, 126.944501], [36.004766, 126.944456], [36.003552, 126.9443], [36.002214, 126.944495], [36.000906, 126.944635], [35.999166, 126.945143], [35.998294, 126.946396], [35.997462, 126.947691], [35.996437, 126.948483], [35.995198, 126.948871], [35.993116, 126.949751], [35.991836, 126.950827], [35.990875, 126.95194], [35.989875, 126.95299], [35.988756, 126.953825], [35.96341, 126.95354], [35.931129, 126.949854], [35.929857, 126.949308], [35.929217, 126.950353], [35.928623, 126.951536], [35.927296, 126.951331], [35.925987, 126.951179], [35.924659, 126.9509], [35.923331, 126.95062], [35.922021, 126.950549], [35.920767, 126.95043], [35.91957, 126.949811], [35.918236, 126.949571], [35.916377, 126.949272], [35.915194, 126.94854], [35.914047, 126.947667], [35.913983, 126.946149], [35.914135, 126.944496], [35.914288, 126.942843], [35.914368, 126.941228], [35.914377, 126.939608], [35.914287, 126.937995], [35.914264, 126.936357], [35.914105, 126.934723], [35.913852, 126.933088], [35.913368, 126.931435], [35.913613, 126.931728], [35.907515, 126.933839], [35.906173, 126.933989], [35.904831, 126.934139], [35.903489, 126.934289], [35.902147, 126.934439], [35.900805, 126.934589], [35.898013, 126.934782], [35.88879, 126.94223], [35.878399, 126.947559], [35.877913, 126.949225], [35.876964, 126.950276], [35.875835, 126.951051], [35.874628, 126.951739], [35.87334, 126.9521], [35.872023, 126.95234], [35.870688, 126.952448], [35.869359, 126.952172], [35.868069, 126.951982], [35.866538, 126.952278], [35.865207, 126.952453], [35.864043, 126.953012], [35.862779, 126.953514], [35.861521, 126.953378], [35.86036, 126.952791], [35.85909, 126.952332], [35.858031, 126.953075], [35.857024, 126.954085], [35.85578, 126.954725], [35.854621, 126.955473], [35.853665, 126.956261], [35.852585, 126.957058], [35.850818, 126.958288], [35.848021, 126.958978], [35.84287, 126.96277], [35.82582, 126.97516], [35.797747, 126.974402], [35.792232, 126.939476], [35.765404, 126.909948], [35.746107, 126.907294], [35.734835, 126.90238], [35.735406, 126.900172], [35.732982, 126.897994], [35.730508, 126.896986], [35.728383, 126.895666], [35.715543, 126.891936], [35.697269, 126.883966], [35.691296, 126.882468], [35.690621, 126.883691], [35.689486, 126.88447], [35.688242, 126.885109], [35.687031, 126.885725], [35.685784, 126.886354], [35.684552, 126.886988], [35.658353, 126.885308], [35.639588, 126.876214], [35.633571, 126.87262], [35.632514, 126.871849], [35.626049, 126.870929], [35.618601, 126.868864], [35.612243, 126.868302], [35.597412, 126.867116], [35.596412, 126.866047], [35.595561, 126.864763], [35.592013, 126.866664], [35.591162, 126.865379], [35.590374, 126.864056], [35.589835, 126.862573], [35.575068, 126.844088], [35.569636, 126.849161], [35.568563, 126.850272], [35.567532, 126.851338], [35.56671, 126.852614], [35.566002, 126.854015], [35.565339, 126.855457], [35.564676, 126.856899], [35.564016, 126.858335], [35.56226, 126.858729], [35.561174, 126.857804], [35.560072, 126.856851], [35.55897, 126.855898], [35.558247, 126.854862], [35.558845, 126.853378], [35.559442, 126.851893], [35.557022, 126.842813], [35.556282, 126.841514], [35.550817, 126.836093], [35.54712, 126.82614], [35.51251, 126.79556], [35.48403, 126.7837], [35.4749, 126.7857], [35.465862, 126.789993], [35.466045, 126.791254], [35.46201, 126.79513], [35.464933, 126.798672], [35.44163, 126.81609], [35.42457, 126.80589], [35.3974, 126.80823], [35.37516, 126.80444], [35.35426, 126.77866], [35.350257, 126.774267], [35.32376, 126.781474], [35.322692, 126.780486], [35.3209, 126.77897], [35.300634, 126.780507], [35.29863, 126.780185], [35.297355, 126.779957], [35.29605, 126.779907], [35.294718, 126.779924], [35.293382, 126.780013], [35.290588, 126.77056], [35.27143, 126.75583], [35.252135, 126.743929], [35.250853, 126.74342], [35.249571, 126.742911], [35.248311, 126.742342], [35.247097, 126.741701], [35.245899, 126.740947], [35.225202, 126.735882], [35.22251, 126.736887], [35.221424, 126.737712], [35.215207, 126.746648], [35.199378, 126.753848], [35.183612, 126.733199], [35.170926, 126.701897], [35.17005, 126.699978], [35.16882, 126.693793], [35.168237, 126.692317], [35.167701, 126.690805], [35.162699, 126.68724], [35.162056, 126.685864], [35.16183, 126.684116], [35.163527, 126.674779], [35.16292, 126.673806], [35.158869, 126.671838], [35.157584, 126.671967], [35.15638, 126.672577], [35.15524, 126.673353], [35.154058, 126.674053], [35.152807, 126.674544], [35.151509, 126.674567], [35.150605, 126.67391], [35.150636, 126.672263], [35.14975, 126.656709], [35.140869, 126.633609], [35.121029, 126.622179], [35.11843, 126.63236], [35.119899, 126.64292], [35.118874, 126.643939], [35.117788, 126.644896], [35.116683, 126.645729], [35.10385, 126.65662], [35.08855, 126.65005], [35.0608, 126.64559], [35.04314, 126.64595], [35.02052, 126.63973], [35.00785, 126.6385], [35.004292, 126.636172], [35.002753, 126.635527], [34.9908, 126.63313], [34.964143, 126.635709], [34.962534, 126.629529], [34.962514, 126.615768], [34.945075, 126.608322], [34.944065, 126.60925], [34.942905, 126.609362], [34.942574, 126.608469], [34.942659, 126.606907], [34.942609, 126.605264], [34.942374, 126.604059], [34.92897, 126.603379], [34.909449, 126.5918], [34.894716, 126.59205], [34.872752, 126.605325], [34.869721, 126.608077], [34.869209, 126.609269], [34.868136, 126.609214], [34.866874, 126.609016], [34.865603, 126.608969], [34.863862, 126.609663], [34.858558, 126.606727], [34.839887, 126.596117], [34.824254, 126.57823], [34.809756, 126.564956], [34.806011, 126.575641], [34.804844, 126.576039], [34.80364, 126.576657], [34.801163, 126.57706], [34.797084, 126.581515], [34.785569, 126.571486], [34.756074, 126.581219], [34.745848, 126.584984], [34.729268, 126.582506], [34.727495, 126.581729], [34.726129, 126.578099], [34.726134, 126.576513], [34.725896, 126.574334], [34.726013, 126.572705], [34.725911, 126.571086], [34.725668, 126.569628], [34.724087, 126.569222], [34.720832, 126.566131], [34.714545, 126.561564], [34.69837, 126.567889], [34.682295, 126.56417], [34.680602, 126.564942], [34.657698, 126.559676], [34.63654, 126.549637], [34.635805, 126.550713], [34.632628, 126.553629], [34.62767, 126.548603], [34.613024, 126.53351], [34.586259, 126.49435], [34.57401, 126.46144], [34.5629, 126.45705], [34.55447, 126.45534], [34.54206, 126.463769], [34.522085, 126.461814], [34.4943, 126.48318], [34.490282, 126.499394], [34.490261, 126.501028], [34.493746, 126.509866], [34.488239, 126.51385], [34.472172, 126.50048], [34.453174, 126.507203], [34.447233, 126.506175], [34.429642, 126.517997], [34.41092, 126.514354], [34.359659, 126.521939], [34.343965, 126.523464], [34.332709, 126.529798], [34.323833, 126.524277], [34.323248, 126.522859], [34.322231, 126.521878], [34.321181, 126.520871], [34.316791, 126.517559], [34.312286, 126.523456], [34.311342, 126.524084], [34.310133, 126.523505], [34.305756, 126.524389], [34.30452, 126.525032], [34.304328, 126.526504], [34.303201, 126.527018], [34.302188, 126.527892], [34.300998, 126.528453], [34.300785, 126.527397], [34.300028, 126.52731], [34.299237, 126.527903], [34.299994, 126.528489], [34.301036, 126.529167], [34.302323, 126.529212], [34.303573, 126.529401], [34.304581, 126.52909], [34.30407, 126.53081], [34.30392, 126.53999], [34.31054, 126.54836], [34.31977, 126.55492], [34.32238, 126.57493], [34.31704, 126.59023], [34.31784, 126.59965], [34.33046, 126.59829], [34.34269, 126.59599], [34.35186, 126.60425], [34.35973, 126.60883], [34.37148, 126.61204], [34.37999, 126.60977], [34.39615, 126.61602], [34.40653, 126.62232], [34.405847, 126.623632], [34.404965, 126.624809], [34.40399, 126.625937], [34.403022, 126.627055], [34.402025, 126.628154], [34.401028, 126.629252], [34.39873, 126.63868], [34.393521, 126.648976], [34.393089, 126.650523], [34.39237, 126.65167], [34.39183, 126.650711], [34.392607, 126.649391], [34.37829, 126.64592], [34.3621, 126.643894], [34.35711, 126.64407], [34.34422, 126.64825], [34.32991, 126.65672], [34.32467, 126.66555], [34.32407, 126.67107], [34.31562, 126.67716], [34.30485, 126.69943], [34.3023, 126.71526], [34.30521, 126.73441], [34.30695, 126.74315], [34.31866, 126.74307], [34.330798, 126.73428], [34.33383, 126.76065], [34.33417, 126.77435], [34.335276, 126.780919], [34.33578, 126.782398], [34.336204, 126.78391], [34.336583, 126.785476], [34.33698, 126.787013], [34.337603, 126.788418], [34.338344, 126.789781], [34.339025, 126.79114], [34.338937, 126.792602], [34.339991, 126.79195], [34.340865, 126.790708], [34.341767, 126.789536], [34.35735, 126.77422], [34.37168, 126.78093], [34.374701, 126.780751], [34.38288, 126.79253], [34.39616, 126.79967], [34.411422, 126.805563], [34.412476, 126.806454], [34.42185, 126.81535], [34.43732, 126.82548], [34.450185, 126.828244], [34.4512, 126.827441], [34.45952, 126.83279], [34.45618, 126.83898], [34.45577, 126.84512], [34.46079, 126.85004], [34.46237, 126.86708], [34.46974, 126.8805], [34.475571, 126.881347], [34.476915, 126.881228], [34.49333, 126.89398], [34.495196, 126.897214], [34.495973, 126.898549], [34.496626, 126.899881], [34.49141, 126.91127], [34.48865, 126.92559], [34.48501, 126.93926], [34.483338, 126.942503], [34.483536, 126.943954], [34.483793, 126.945399], [34.484707, 126.946463], [34.485395, 126.947805], [34.4953, 126.95304], [34.50709, 126.96567], [34.511623, 126.970553], [34.512458, 126.97174], [34.512965, 126.972789], [34.54021, 126.98619], [34.545134, 126.988421], [34.544996, 126.986956], [34.55366, 126.9897], [34.55935, 126.97703], [34.55979, 126.95762], [34.56414, 126.93039], [34.56415, 126.90819], [34.565, 126.89303], [34.56966, 126.88344], [34.56892, 126.88109], [34.5664, 126.87601], [34.56442, 126.86318], [34.557723, 126.84813], [34.56486, 126.83828], [34.56986, 126.81479], [34.58621, 126.7937], [34.61324, 126.79075], [34.620852, 126.793173], [34.62167, 126.794453], [34.62248, 126.795599], [34.623743, 126.796035], [34.624816, 126.795339], [34.625674, 126.794134], [34.64009, 126.77757], [34.63191, 126.75995], [34.60948, 126.73804], [34.58928, 126.72633], [34.5775, 126.71211], [34.57348, 126.689064], [34.573848, 126.687646], [34.57363, 126.6833], [34.571362, 126.674181], [34.56949, 126.66145], [34.56586, 126.6389], [34.56725, 126.63298], [34.57031, 126.62032], [34.57094, 126.60727], [34.579774, 126.582512], [34.58418, 126.56342], [34.59435, 126.55881], [34.6013, 126.56731], [34.61793, 126.57037], [34.62424, 126.55761], [34.631839, 126.554383], [34.63368, 126.552532], [34.636133, 126.550242], [34.637552, 126.549532], [34.67136, 126.55793], [34.681306, 126.565001], [34.688379, 126.56778], [34.707569, 126.562981], [34.715016, 126.561729], [34.722929, 126.568218], [34.7239, 126.569246], [34.725188, 126.569082], [34.725773, 126.570146], [34.725952, 126.571431], [34.726008, 126.573022], [34.725658, 126.575723], [34.725177, 126.577255], [34.725457, 126.578488], [34.727403, 126.582141], [34.730902, 126.585297], [34.755276, 126.581531], [34.763968, 126.574805], [34.767408, 126.573038], [34.768635, 126.573716], [34.769844, 126.57435], [34.774475, 126.576176], [34.788359, 126.573103], [34.799034, 126.581435], [34.801343, 126.577046], [34.803774, 126.576511], [34.805005, 126.575992], [34.806839, 126.574099], [34.812263, 126.567825], [34.835126, 126.594503], [34.845182, 126.598421], [34.862435, 126.610064], [34.863686, 126.609816], [34.864978, 126.60935], [34.86657, 126.609111], [34.867902, 126.60923], [34.869046, 126.609428], [34.869826, 126.60837], [34.87963, 126.601224], [34.897181, 126.593185], [34.913577, 126.593716], [34.942596, 126.60658], [34.942601, 126.608193], [34.942631, 126.609254], [34.943841, 126.609401], [34.944832, 126.60842], [34.962912, 126.616375], [34.964918, 126.626256], [34.962631, 126.629414], [34.963197, 126.635764], [34.99043, 126.63208], [35.00163, 126.63595], [35.01737, 126.63658], [35.03764, 126.64461], [35.05705, 126.64408], [35.08498, 126.64872], [35.088741, 126.650246], [35.089925, 126.650779], [35.09714, 126.65439], [35.116111, 126.64597], [35.117311, 126.645353], [35.12063, 126.64037], [35.1178, 126.62942], [35.128805, 126.622308], [35.1436, 126.64238], [35.150183, 126.664624], [35.150625, 126.672812], [35.15062, 126.674409], [35.151954, 126.674646], [35.153252, 126.674476], [35.154468, 126.673828], [35.155638, 126.6731], [35.156765, 126.672292], [35.157991, 126.671878], [35.159315, 126.671898], [35.163384, 126.675045], [35.161765, 126.68465], [35.16222, 126.686409], [35.165975, 126.690287], [35.16813, 126.692015], [35.16868, 126.693511], [35.170053, 126.699648], [35.170626, 126.700948], [35.179809, 126.725843], [35.195639, 126.75065], [35.214263, 126.747645], [35.215288, 126.746697], [35.2212, 126.73802], [35.225087, 126.735919], [35.245779, 126.740871], [35.246977, 126.741626], [35.248186, 126.74228], [35.249443, 126.74286], [35.250725, 126.743369], [35.252007, 126.743878], [35.27097, 126.75567], [35.289722, 126.770091], [35.292176, 126.780333], [35.300368, 126.780599], [35.321736, 126.779571], [35.322798, 126.780588], [35.323868, 126.781572], [35.350338, 126.774398], [35.35533, 126.78034], [35.38214, 126.8025], [35.39862, 126.80795], [35.42622, 126.80784], [35.4436, 126.81592], [35.465036, 126.798574], [35.4617, 126.79385], [35.466203, 126.791012], [35.465945, 126.789687], [35.47675, 126.78448], [35.4873, 126.78396], [35.52139, 126.80533], [35.549877, 126.834629], [35.5541, 126.83809], [35.559203, 126.852487], [35.558606, 126.853971], [35.558308, 126.855326], [35.55941, 126.856279], [35.560513, 126.857232], [35.561615, 126.858185], [35.562705, 126.859102], [35.56628, 126.85347], [35.569967, 126.848841], [35.571003, 126.847797], [35.572035, 126.846732], [35.573138, 126.845845], [35.574277, 126.844961], [35.575286, 126.843906], [35.589783, 126.862611], [35.590273, 126.864139], [35.591027, 126.865441], [35.591861, 126.866698], [35.592706, 126.867983], [35.593536, 126.86923], [35.598564, 126.866017], [35.61346, 126.868591], [35.618644, 126.868845], [35.626766, 126.871025], [35.632952, 126.872023], [35.633936, 126.87303], [35.647453, 126.876213], [35.669679, 126.888841], [35.684995, 126.886753], [35.686242, 126.886123], [35.687488, 126.885494], [35.688698, 126.884875], [35.689942, 126.884236], [35.691022, 126.883709], [35.696879, 126.883839], [35.710092, 126.890294], [35.726253, 126.895856], [35.729865, 126.89649], [35.731425, 126.89866], [35.735243, 126.899306], [35.734489, 126.902598], [35.754162, 126.907874], [35.778182, 126.914964], [35.797199, 126.948209], [35.81489, 126.98266], [35.83082, 126.96894], [35.846445, 126.959765], [35.852419, 126.957143], [35.853546, 126.956374], [35.854502, 126.955552], [35.855656, 126.954789], [35.856899, 126.954149], [35.857913, 126.953156], [35.859001, 126.952368], [35.86024, 126.952715], [35.861423, 126.953263], [35.862644, 126.953524], [35.863912, 126.953052], [35.865093, 126.952463], [35.866405, 126.952307], [35.867725, 126.952061], [35.870252, 126.952458], [35.873208, 126.952135], [35.874525, 126.951784], [35.875705, 126.951097], [35.876849, 126.95034], [35.877839, 126.949365], [35.878405, 126.947883], [35.88772, 126.94294], [35.897822, 126.935096], [35.899164, 126.934768], [35.900492, 126.934624], [35.901834, 126.934474], [35.903176, 126.934324], [35.904518, 126.934174], [35.90586, 126.934024], [35.907202, 126.933874], [35.908544, 126.933724], [35.913869, 126.933197], [35.914122, 126.934832], [35.914274, 126.936468], [35.914281, 126.938105], [35.914388, 126.939718], [35.914365, 126.941339], [35.914278, 126.942953], [35.914125, 126.944606], [35.913972, 126.946259], [35.914123, 126.947725], [35.91527, 126.948598], [35.916461, 126.949308], [35.918325, 126.949587], [35.919659, 126.949827], [35.920846, 126.950481], [35.922111, 126.950546], [35.923419, 126.950638], [35.924748, 126.950918], [35.926044, 126.951191], [35.927386, 126.951341], [35.92871, 126.951563], [35.929248, 126.950249], [35.929941, 126.949344], [35.931214, 126.94989], [35.932487, 126.950436], [35.93376, 126.950982], [35.93925, 126.953294], [35.940488, 126.953814], [35.941767, 126.954338], [35.943046, 126.954861], [35.944325, 126.955384], [35.945604, 126.955908], [35.946884, 126.956431], [35.948121, 126.956937], [35.949399, 126.957466], [35.950676, 126.957994], [35.951954, 126.958523], [35.953232, 126.959052], [35.95451, 126.95958], [35.955787, 126.960109], [35.957058, 126.96063], [35.958338, 126.96115], [35.959618, 126.961669], [35.960899, 126.962189], [35.962179, 126.962708], [35.963459, 126.963228], [35.964739, 126.963747], [35.966014, 126.964264], [35.967297, 126.964776], [35.968579, 126.965287], [35.969861, 126.965799], [35.971046, 126.965188], [35.971946, 126.964019], [35.972827, 126.962759], [35.974006, 126.962084], [35.975116, 126.961241], [35.976027, 126.960025], [35.976934, 126.958795], [35.977885, 126.957684], [35.979141, 126.957959], [35.980385, 126.95833], [35.981019, 126.957306], [35.98201, 126.956484], [35.983274, 126.95603], [35.984569, 126.955571], [35.985852, 126.955092], [35.987138, 126.954591], [35.988839, 126.95451], [35.989987, 126.953476], [35.990745, 126.952209], [35.991678, 126.951024], [35.992909, 126.949859], [35.994046, 126.949581], [35.995064, 126.94889], [35.996315, 126.948554], [35.997382, 126.947824], [35.9982, 126.946515], [35.999093, 126.945283], [36.000771, 126.944649], [36.002114, 126.944508], [36.003418, 126.94432], [36.004653, 126.944365], [36.005857, 126.944747], [36.007049, 126.94444], [36.00798, 126.945504], [36.00865, 126.946832], [36.008948, 126.948434], [36.02099, 126.95564], [36.02237, 126.97978], [36.023355, 126.989308], [36.024167, 126.990574], [36.02553, 126.99874], [36.03389, 127.0117], [36.05081, 127.01986], [36.07598, 127.03106], [36.09261, 127.01906], [36.101217, 127.017444], [36.11705, 127.01872], [36.121563, 127.021621], [36.122803, 127.021875], [36.124064, 127.022298], [36.125336, 127.02285], [36.126601, 127.023392], [36.127891, 127.023709], [36.128835, 127.022842], [36.130265, 127.02144], [36.131563, 127.021297], [36.132907, 127.021175], [36.134248, 127.021058], [36.135592, 127.020946], [36.136918, 127.020753], [36.137964, 127.019796], [36.139149, 127.019113], [36.140398, 127.018886], [36.141684, 127.019143], [36.142841, 127.018643], [36.144003, 127.017797], [36.145138, 127.016957], [36.146289, 127.01609], [36.147468, 127.015337], [36.148551, 127.014483], [36.149577, 127.013401], [36.151809, 127.012235], [36.15957, 127.01726], [36.18065, 127.01749], [36.19278, 127.007837], [36.193063, 127.006254], [36.193313, 127.00465], [36.194216, 127.003616], [36.19729, 127.00397], [36.21969, 126.99974], [36.24643, 126.99469], [36.257591, 127.006963], [36.26978, 127.01894], [36.28378, 127.03532], [36.29588, 127.03712], [36.30537, 127.04124], [36.31577, 127.04685], [36.32912, 127.04234], [36.332931, 127.045729], [36.334019, 127.046628], [36.335254, 127.046697], [36.337246, 127.047169], [36.338443, 127.047819], [36.339661, 127.048473], [36.340916, 127.049075], [36.342176, 127.049671], [36.34339, 127.050317], [36.344627, 127.050893], [36.345905, 127.051426], [36.347169, 127.051954], [36.348437, 127.052521], [36.35328, 127.0546], [36.36461, 127.06442], [36.381502, 127.075943], [36.39311, 127.08047], [36.40534, 127.09339], [36.42285, 127.10336], [36.441372, 127.119254], [36.444584, 127.120371], [36.463364, 127.123251], [36.464865, 127.123389], [36.466266, 127.124155], [36.467363, 127.125063], [36.468464, 127.12597], [36.469552, 127.126851], [36.470084, 127.127934], [36.469296, 127.129292], [36.468503, 127.130647], [36.467608, 127.131829], [36.46187, 127.14199], [36.45477, 127.15754], [36.4477, 127.18535], [36.43851, 127.20581], [36.440246, 127.22382], [36.441452, 127.224496], [36.442771, 127.224837], [36.444083, 127.224805], [36.445404, 127.22482], [36.446707, 127.224879], [36.44804, 127.225119], [36.449344, 127.22552], [36.450604, 127.226001], [36.451799, 127.226773], [36.452964, 127.227582], [36.454084, 127.228515], [36.455173, 127.229472], [36.456194, 127.230566], [36.457175, 127.231701], [36.458139, 127.232872], [36.459064, 127.234025], [36.459912, 127.235327], [36.460726, 127.236593], [36.461376, 127.23806], [36.462027, 127.239528], [36.462677, 127.240995], [36.462817, 127.242149], [36.46489, 127.25271], [36.47771, 127.26235], [36.48229, 127.2712], [36.49159, 127.28976], [36.51031, 127.30432], [36.51757, 127.31982], [36.52255, 127.3182], [36.53035, 127.30198], [36.531356, 127.297541], [36.532325, 127.296574], [36.533442, 127.295744], [36.54235, 127.29536], [36.55896, 127.29759], [36.57593, 127.30026], [36.58026, 127.300036], [36.5819, 127.30038], [36.58606, 127.32264], [36.60359, 127.34051], [36.62244, 127.34961], [36.63898, 127.35853], [36.67177, 127.3923], [36.681204, 127.403802], [36.682159, 127.409438], [36.682246, 127.411115], [36.682333, 127.412791], [36.682406, 127.414445], [36.682477, 127.416123], [36.68284, 127.417434], [36.683005, 127.418957], [36.683099, 127.420633], [36.683208, 127.422279], [36.683356, 127.423949], [36.68338, 127.425542], [36.683749, 127.427112], [36.683993, 127.428764], [36.684237, 127.430417], [36.684487, 127.432063], [36.684739, 127.433713], [36.69779, 127.45711], [36.71458, 127.47034], [36.73654, 127.46247], [36.75115, 127.44981], [36.76758, 127.44753], [36.782085, 127.435112], [36.78746, 127.43531], [36.80847, 127.43051], [36.82561, 127.40683], [36.84208, 127.39291], [36.8616, 127.3758], [36.87481, 127.38238], [36.88663, 127.36578], [36.90309, 127.35718], [36.9115, 127.34006], [36.9238, 127.32978], [36.93306, 127.32132], [36.93801, 127.32005], [36.94967, 127.3164], [36.96074, 127.31007], [36.97201, 127.31604], [36.97794, 127.30997], [36.99477, 127.29313], [37.00533, 127.27976], [37.01112, 127.27064], [37.02637, 127.26501], [37.04859, 127.26188], [37.050156, 127.260642], [37.065708, 127.256129], [37.106387, 127.251012], [37.114886, 127.213973], [37.13974, 127.196759], [37.144313, 127.199788], [37.145453, 127.202326], [37.184791, 127.20428], [37.195928, 127.201133], [37.196602, 127.199871], [37.19326, 127.19142], [37.199446, 127.181886], [37.220181, 127.171114], [37.237174, 127.179254], [37.238197, 127.179052], [37.238442, 127.177387], [37.238742, 127.175742], [37.239378, 127.174445], [37.24489, 127.166274], [37.248386, 127.166807], [37.249494, 127.167614], [37.250694, 127.168138], [37.252182, 127.167854], [37.253278, 127.166914], [37.254327, 127.165894], [37.255384, 127.164844], [37.256492, 127.16395], [37.258368, 127.162253], [37.25926, 127.161037], [37.260176, 127.159851], [37.261865, 127.16151], [37.262811, 127.160379], [37.263809, 127.159268], [37.264891, 127.158259], [37.266069, 127.157493], [37.267255, 127.156792], [37.268463, 127.156143], [37.270543, 127.155857], [37.271481, 127.156983], [37.273448, 127.157696], [37.27478, 127.157568], [37.27598, 127.156988], [37.276911, 127.155763], [37.27954, 127.156344], [37.280425, 127.15507], [37.281398, 127.154022], [37.281966, 127.153706], [37.283197, 127.153689], [37.284179, 127.141724], [37.284147, 127.140472], [37.284997, 127.139329], [37.2857, 127.138002], [37.289347, 127.136598], [37.289557, 127.135027], [37.289891, 127.133949], [37.291199, 127.131294], [37.29111, 127.128103], [37.290744, 127.126226], [37.291009, 127.124632], [37.292986, 127.11388], [37.294392, 127.111964], [37.295195, 127.110702], [37.295837, 127.109303], [37.296935, 127.108422], [37.29796, 127.107627], [37.300874, 127.10615], [37.302012, 127.105109], [37.312567, 127.10443], [37.320677, 127.106752], [37.321448, 127.108142], [37.323661, 127.110076], [37.324957, 127.110951], [37.326233, 127.110986], [37.327508, 127.110837], [37.33998, 127.11302], [37.35078, 127.12045], [37.37683, 127.10854], [37.383649, 127.115131], [37.396862, 127.123826], [37.398209, 127.12385], [37.41043, 127.12286], [37.416695, 127.118946], [37.417943, 127.118381], [37.42161, 127.11723], [37.43057, 127.11846], [37.473439, 127.120551], [37.496923, 127.090687], [37.500386, 127.073888], [37.507156, 127.068513], [37.51115, 127.067999], [37.516303, 127.069177], [37.517645, 127.069022], [37.519394, 127.069991], [37.51961, 127.071592], [37.519398, 127.073246], [37.519115, 127.074907], [37.51926, 127.09109], [37.52361, 127.10143], [37.53526, 127.11037], [37.54349, 127.118929], [37.544719, 127.119502], [37.54567, 127.12444]];
-const ROUTE_CUM    = [0.0, 0.14, 0.29, 0.44, 0.58, 0.73, 0.88, 1.03, 1.18, 2.01, 2.59, 2.74, 3.51, 3.66, 3.8, 3.95, 4.1, 5.04, 7.28, 8.38, 9.08, 9.22, 9.37, 9.52, 9.66, 9.81, 9.96, 10.11, 10.26, 10.41, 10.56, 10.71, 10.86, 11.01, 11.16, 11.3, 11.45, 11.6, 11.75, 11.9, 12.04, 12.19, 12.34, 12.49, 12.64, 12.79, 12.93, 13.08, 13.23, 13.4, 15.83, 16.02, 16.18, 16.33, 16.47, 16.62, 16.77, 16.92, 17.05, 17.2, 18.24, 19.76, 21.58, 23.47, 25.49, 27.76, 28.31, 28.46, 28.73, 31.16, 33.17, 33.3, 33.62, 33.79, 33.92, 34.07, 35.27, 37.23, 37.45, 37.73, 38.01, 38.89, 40.74, 40.89, 41.03, 41.18, 41.68, 42.0, 42.21, 42.34, 42.51, 42.76, 42.9, 43.05, 43.63, 44.87, 45.05, 46.13, 46.5, 46.63, 47.32, 48.0, 49.98, 52.24, 53.53, 54.72, 55.45, 56.62, 58.5, 60.83, 61.34, 63.01, 64.1, 68.29, 71.96, 73.72, 75.87, 77.19, 78.61, 79.09, 79.24, 79.38, 79.52, 79.66, 81.46, 82.7, 82.84, 82.99, 83.98, 85.94, 87.39, 87.53, 87.68, 89.0, 89.14, 90.51, 90.79, 90.94, 91.09, 91.28, 93.65, 94.45, 94.6, 94.75, 94.89, 95.04, 95.18, 95.33, 95.48, 95.63, 95.77, 95.92, 96.07, 96.21, 96.36, 96.51, 96.66, 96.81, 96.96, 97.11, 97.25, 97.4, 97.54, 97.69, 97.84, 97.99, 98.14, 98.28, 98.43, 98.57, 98.71, 103.04, 103.99, 105.58, 109.57, 111.34, 112.89, 114.14, 115.34, 117.68, 119.09, 121.54, 124.4, 126.68, 128.61, 130.43, 131.52, 132.38, 132.68, 134.17, 136.4, 138.14, 139.52, 140.17, 141.29, 142.54, 142.95, 143.73, 143.88, 144.27, 144.42, 144.63, 145.8, 146.98, 148.1, 149.73, 152.15, 153.35, 156.7, 158.92, 160.68, 163.12, 164.93, 165.32, 166.82, 166.95, 167.1, 167.6, 170.17, 172.34, 172.78, 174.65, 175.99, 177.55, 180.93, 182.93, 184.69, 187.0, 189.09, 190.94, 191.75, 191.9, 193.0, 194.27, 195.75, 196.84, 197.87, 199.18, 200.73, 202.78, 202.93, 203.32, 203.46, 203.8, 205.56, 205.7, 205.84, 205.98, 206.77, 208.14, 209.17, 212.49, 212.64, 212.78, 212.93, 213.08, 213.72, 213.87, 214.02, 214.17, 214.32, 214.46, 214.6, 214.75, 214.89, 215.04, 215.18, 215.33, 215.47, 215.62, 215.76, 216.14, 217.55, 218.82, 220.49, 221.55, 223.04, 224.64, 226.1, 227.67, 227.82, 227.97, 228.42, 230.56, 230.71, 230.85, 231.0, 231.15, 231.3, 231.44, 231.59, 231.74, 231.89, 232.03, 232.18, 232.33, 233.57, 233.76, 233.91, 234.05, 234.61, 234.76, 235.08, 235.82, 237.66, 239.16, 240.63, 241.61, 241.75, 241.9, 242.04, 242.19, 242.33, 242.47, 242.62, 242.92, 243.67, 245.73, 247.55, 249.57, 250.87, 253.84, 255.42, 257.58, 257.84, 257.99, 258.13, 258.28, 258.43, 259.78, 260.82, 260.97, 261.12, 261.27, 261.42, 261.56, 262.17, 262.32, 262.87, 263.02, 264.59, 267.73, 270.72, 271.81, 272.01, 273.28, 273.43, 273.57, 273.71, 273.86, 274.0, 274.98, 276.33, 278.13, 280.32, 282.3, 284.47, 285.89, 286.05, 286.85, 288.75, 290.69, 292.51, 295.5, 297.5, 299.33, 301.04, 302.87, 304.03, 306.14, 306.29, 306.44, 306.58, 306.73, 306.88, 307.03, 307.17, 307.32, 307.47, 309.47, 310.13, 311.12, 312.95, 313.1, 313.27, 314.28, 314.43, 314.58, 314.73, 314.88, 316.06, 316.2, 317.06, 320.24, 322.7, 323.37, 324.85, 326.55, 326.7, 327.03, 327.4, 327.54, 327.68, 327.83, 329.49, 330.26, 331.89, 332.03, 332.17, 332.31, 332.49, 332.73, 332.87, 333.02, 333.17, 333.38, 333.53, 333.68, 333.81, 333.96, 334.21, 334.38, 334.53, 334.67, 334.82, 337.73, 341.8, 341.95, 342.09, 342.24, 342.39, 342.54, 342.69, 342.83, 342.98, 343.12, 343.27, 343.42, 343.63, 343.78, 343.93, 344.07, 344.22, 344.37, 344.52, 344.67, 344.81, 344.96, 345.11, 345.26, 345.42, 345.57, 346.28, 346.43, 346.58, 346.73, 346.88, 347.03, 347.34, 348.64, 349.96, 350.12, 350.27, 350.41, 350.56, 350.71, 350.86, 351.01, 351.16, 351.3, 351.47, 351.62, 351.76, 351.91, 352.06, 352.2, 352.35, 352.49, 352.64, 352.79, 352.93, 353.08, 353.22, 353.44, 353.78, 354.46, 356.85, 360.35, 363.88, 368.18, 370.41, 371.8, 372.01, 372.39, 372.78, 373.04, 374.64, 376.83, 377.51, 377.66, 377.81, 377.96, 378.11, 378.26, 378.4, 381.43, 384.04, 384.79, 384.93, 385.73, 386.67, 387.38, 389.13, 389.3, 389.45, 390.01, 390.16, 390.31, 390.45, 392.88, 393.65, 393.81, 393.96, 394.11, 394.26, 394.41, 394.56, 394.71, 395.02, 395.17, 395.32, 395.47, 395.61, 395.76, 395.91, 396.81, 396.95, 397.76, 398.78, 403.73, 407.28, 408.62, 409.8, 409.94, 410.85, 411.55, 414.89, 417.29, 420.47, 423.31, 427.19, 427.79, 431.02, 431.17, 431.41, 433.68, 433.91, 434.05, 434.19, 434.34, 434.49, 435.56, 438.22, 440.64, 440.79, 440.94, 441.09, 441.23, 441.38, 443.75, 444.07, 444.21, 445.32, 447.4, 450.0, 453.27, 453.47, 454.07, 454.22, 454.37, 455.12, 455.26, 455.43, 456.3, 456.45, 456.94, 457.08, 457.23, 457.37, 457.52, 457.67, 457.81, 457.96, 458.11, 459.56, 462.03, 464.81, 466.22, 467.3, 467.45, 467.6, 467.74, 469.72, 471.7, 475.04, 477.06, 479.74, 481.39, 481.85, 482.03, 483.64, 487.13, 487.83, 489.27, 491.68, 491.82, 491.96, 492.1, 492.25, 492.4, 492.53, 494.05, 497.07, 499.18, 502.14, 502.61, 502.75, 502.88, 503.03, 503.17, 503.37, 504.13, 506.6, 509.14, 511.17, 512.34, 512.48, 512.63, 512.95, 513.65, 515.56, 519.31, 520.53, 522.63, 522.84, 523.23, 523.37, 523.58, 523.73, 523.88, 524.03, 524.26, 524.72, 525.57, 527.57, 529.5, 529.73, 532.7, 535.41, 535.56, 536.01, 536.83, 539.07, 543.84, 548.0, 549.39, 550.43, 552.26, 555.0, 559.13, 560.84, 560.99, 561.91, 562.81, 565.11, 567.5, 568.23, 570.67, 573.15, 579.22, 581.05, 582.52, 583.65, 583.8, 583.94, 584.09, 584.7, 585.57, 585.71, 585.86, 586.36, 586.52, 586.65, 586.81, 586.96, 587.1, 587.24, 587.39, 587.54, 587.67, 587.82, 587.96, 588.1, 588.24, 588.46, 589.54, 590.73, 591.99, 594.08, 595.76, 597.17, 598.64, 600.14, 601.51, 602.58, 603.99, 605.1, 607.15, 608.69, 608.84, 608.99, 609.14, 609.28, 609.43, 609.58, 610.51, 611.66, 611.81, 611.95, 612.09, 612.24, 614.06, 616.02, 616.73, 618.44, 620.8, 621.88, 622.48, 623.72, 626.47, 628.23, 630.18, 631.41, 633.02, 635.03, 637.63, 638.94, 639.84, 639.98, 640.13, 640.28, 640.43, 640.58, 640.73, 640.87, 641.01, 641.15, 641.3, 641.45, 643.68, 645.55, 645.92, 647.48, 649.19, 651.03, 651.17, 652.68, 654.74, 656.42, 656.57, 657.95, 659.21, 660.04, 660.89, 662.66, 664.62, 665.28, 665.43, 667.65, 668.01, 668.16, 668.3, 669.54, 670.99, 672.38, 672.79, 672.93, 673.08, 673.22, 673.37, 675.22, 677.47, 678.29, 678.43, 678.57, 682.1, 682.92, 683.06, 684.22, 685.83, 687.94, 690.62, 692.73, 694.18, 695.86, 696.66, 697.56, 698.87, 700.59, 701.82, 704.15, 707.57, 710.69, 711.6, 711.75, 711.89, 712.04, 712.18, 712.33, 714.55, 716.68, 719.93, 722.58, 724.62, 726.89, 727.04, 727.44, 728.44, 729.67, 731.89, 732.47, 733.76, 735.0, 737.57, 739.42, 740.75, 741.87, 743.99, 745.58, 746.56, 746.82, 747.18, 747.38, 751.71, 753.04, 753.99, 756.27, 757.18, 758.25, 758.4, 758.54, 758.69, 758.83, 758.97, 759.22, 759.37, 759.55, 760.02, 760.53, 763.44, 764.61, 765.05, 765.2, 765.34, 765.89, 767.63, 769.42, 769.92, 770.24, 770.38, 770.68, 772.01, 775.63, 776.85, 779.26, 779.4, 779.55, 779.73, 779.88, 780.03, 780.17, 781.54, 783.91, 786.47, 790.42, 790.57, 790.71, 790.86, 791.0, 793.51, 794.46, 794.86, 795.48, 798.96, 800.55, 802.45, 805.03, 807.24, 810.58, 811.04, 811.18, 812.14, 814.9, 815.04, 815.66, 816.82, 818.85, 821.54, 823.88, 824.65, 824.8, 824.95, 825.09, 825.24, 825.39, 825.53, 825.68, 825.82, 826.42, 827.32, 827.49, 828.12, 828.45, 828.6, 829.2, 829.34, 831.88, 834.79, 837.24, 837.38, 838.46, 838.94, 841.31, 841.46, 841.6, 841.75, 841.9, 842.05, 844.43, 847.02, 848.06, 849.09, 851.5, 851.65, 851.8, 855.02, 855.8, 860.28, 862.47, 865.88, 868.13, 871.26, 872.07, 872.89, 873.03, 874.46, 875.98, 880.43, 884.86, 885.44, 886.94, 887.09, 887.23, 887.38, 887.53, 887.68, 887.83, 888.57, 889.19, 889.34, 889.49, 889.63, 889.78, 889.93, 892.31, 892.46, 892.6, 892.75, 892.9, 893.05, 893.78, 895.51, 896.09, 897.1, 897.87, 898.01, 899.59, 902.63, 904.4, 904.55, 904.7, 904.84, 904.99, 905.13, 905.84, 907.45, 909.43, 909.86, 910.13, 910.62, 910.96, 913.3, 916.08, 919.89, 924.51, 926.76, 928.82, 929.55, 929.7, 929.84, 929.99, 930.14, 930.28, 930.43, 930.57, 930.72, 930.86, 931.01, 931.16, 931.3, 931.45, 931.74, 932.07, 932.22, 932.36, 932.51, 932.65, 932.8, 934.02, 935.41, 935.57, 935.72, 935.87, 936.02, 936.17, 936.32, 936.47, 936.62, 937.34, 937.49, 937.63, 937.78, 937.93, 938.07, 938.22, 938.37, 938.52, 938.67, 938.82, 938.97, 939.18, 939.33, 939.47, 939.61, 939.76, 939.91, 940.06, 940.21, 940.35, 940.5, 940.65, 940.8, 940.95, 941.1, 941.74, 941.89, 942.04, 942.19, 942.34, 942.49, 942.64, 942.78, 942.93, 943.08, 943.23, 943.38, 943.53, 943.68, 943.83, 943.98, 944.13, 944.28, 944.43, 944.58, 944.73, 944.88, 945.03, 945.18, 945.33, 945.48, 945.62, 945.77, 945.92, 946.07, 946.22, 946.37, 946.51, 946.65, 946.8, 946.95, 947.09, 947.23, 947.38, 947.53, 947.68, 947.88, 948.05, 948.19, 948.34, 948.52, 948.65, 948.8, 948.94, 949.08, 949.23, 949.38, 949.59, 949.74, 949.88, 950.02, 950.17, 950.31, 950.47, 950.61, 950.76, 952.32, 954.99, 955.93, 956.08, 956.87, 958.43, 960.51, 963.6, 965.8, 966.79, 968.61, 969.2, 969.34, 969.48, 969.63, 969.78, 969.93, 970.08, 970.28, 970.43, 970.58, 970.73, 970.88, 971.02, 971.17, 971.32, 971.46, 971.61, 971.74, 971.89, 972.04, 972.19, 972.34, 972.48, 972.63, 972.91, 974.12, 976.84, 978.52, 978.67, 978.82, 978.96, 979.32, 982.18, 985.37, 987.06, 988.84, 991.08, 992.49, 993.71, 995.0, 996.6, 997.22, 997.37, 997.53, 997.78, 997.93, 998.07, 998.22, 998.37, 998.52, 998.67, 998.82, 998.97, 999.12, 999.68, 1001.31, 1003.52, 1004.89, 1006.72, 1009.09, 1011.66, 1012.05, 1014.33, 1014.5, 1014.69, 1014.84, 1014.99, 1015.13, 1015.27, 1015.42, 1015.57, 1015.72, 1016.84, 1018.48, 1021.1, 1023.41, 1025.21, 1025.36, 1025.51, 1025.65, 1025.8, 1025.94, 1026.09, 1026.24, 1026.39, 1026.54, 1026.69, 1026.84, 1026.99, 1027.14, 1027.29, 1027.44, 1027.58, 1027.73, 1027.88, 1028.03, 1028.18, 1028.33, 1028.49, 1029.56, 1031.35, 1032.45, 1034.53, 1037.02, 1038.83, 1039.58, 1041.31, 1041.74, 1041.88, 1042.02, 1043.09, 1045.02, 1047.05, 1047.59, 1047.78, 1049.89, 1052.43, 1054.8, 1056.93, 1061.69, 1063.2, 1063.73, 1063.88, 1064.03, 1064.18, 1064.33, 1064.47, 1064.61, 1064.76, 1064.9, 1065.05, 1065.2, 1065.35, 1065.5, 1065.64, 1065.79, 1065.94, 1068.74, 1071.01, 1073.9, 1076.01, 1078.21, 1080.23, 1080.84, 1083.34, 1086.38, 1089.12, 1091.95, 1094.08, 1096.28, 1098.6, 1100.56, 1102.52, 1104.18, 1105.1, 1106.81, 1108.27, 1109.97, 1111.54, 1114.18, 1116.26, 1117.45, 1119.53, 1122.13, 1122.34, 1124.16, 1129.1, 1133.24, 1136.77, 1137.34, 1137.67, 1142.16, 1143.86, 1144.0, 1144.86, 1145.99, 1148.76, 1150.9, 1151.05, 1151.2, 1151.35, 1151.5, 1152.48, 1152.89, 1153.03, 1153.17, 1153.34, 1153.49, 1153.64, 1153.79, 1153.94, 1154.2, 1154.34, 1154.49, 1154.79, 1154.93, 1155.08, 1155.23, 1155.38, 1155.53, 1155.67, 1155.98, 1156.13, 1156.36, 1156.51, 1156.65, 1156.8, 1157.2, 1157.35, 1157.49, 1157.62, 1157.77, 1159.16, 1159.3, 1159.44, 1159.59, 1160.03, 1160.17, 1160.33, 1160.61, 1160.92, 1161.12, 1161.26, 1162.26, 1162.53, 1162.67, 1162.81, 1162.96, 1163.1, 1163.45, 1163.6, 1164.8, 1165.77, 1165.92, 1166.25, 1166.45, 1166.59, 1166.73, 1168.19, 1169.83, 1173.25, 1174.21, 1175.92, 1176.07, 1177.45, 1178.23, 1178.38, 1178.8, 1179.9, 1184.89, 1188.84, 1190.42, 1191.39, 1191.84, 1192.54, 1192.69, 1192.92, 1193.07, 1193.22, 1193.37, 1194.81, 1195.87, 1197.43, 1198.69, 1198.83, 1199.39];
-const CHECKPOINTS  = [{"name": "🚩 起點", "name_en": "Start · Hanam Misari", "dist": 0, "eta": "06/06 06:00", "elapsed": "0h", "type": "start", "lat": 37.545104, "lon": 127.119165}, {"name": "이천", "name_en": "Icheon", "dist": 50, "eta": "06/06 08:30", "elapsed": "2.7h", "type": "supply", "lat": 37.469689, "lon": 127.49796}, {"name": "음성", "name_en": "Eumseong", "dist": 100, "eta": "06/06 11:10", "elapsed": "5.3h", "type": "supply", "lat": 37.206812, "lon": 127.747168}, {"name": "청주", "name_en": "Cheongju", "dist": 160, "eta": "06/06 14:20", "elapsed": "8.8h", "type": "lunch", "lat": 36.8299, "lon": 127.84604}, {"name": "대전 CP1", "name_en": "Daejeon CP1", "dist": 220, "eta": "06/06 17:50", "elapsed": "12.0h", "type": "cp", "lat": 36.44019, "lon": 127.69861}, {"name": "논산", "name_en": "Nonsan", "dist": 280, "eta": "06/06 21:00", "elapsed": "15.2h", "type": "supply", "lat": 36.16209, "lon": 127.32455}, {"name": "🛏 익산#1", "name_en": "Iksan · H Avenue", "dist": 340, "eta": "06/07 00:10", "elapsed": "21.0h", "type": "sleep", "lat": 35.931129, "lon": 126.949854}, {"name": "김제", "name_en": "Gimje", "dist": 390, "eta": "06/07 05:30", "elapsed": "24.0h", "type": "lunch", "lat": 35.592013, "lon": 126.866664}, {"name": "광주 CP2", "name_en": "Gwangju CP2", "dist": 450, "eta": "06/07 09:00", "elapsed": "27.2h", "type": "cp", "lat": 35.183612, "lon": 126.733199}, {"name": "나주", "name_en": "Naju", "dist": 500, "eta": "06/07 11:40", "elapsed": "29.8h", "type": "supply", "lat": 34.894716, "lon": 126.59205}, {"name": "목포 CP3", "name_en": "Mokpo CP3", "dist": 560, "eta": "06/07 14:50", "elapsed": "33.3h", "type": "cp", "lat": 34.490282, "lon": 126.499394}, {"name": "🛏 완도#2", "name_en": "Wando · Nesia Hotel", "dist": 640, "eta": "06/07 19:20", "elapsed": "47.0h", "type": "sleep", "lat": 34.33578, "lon": 126.782398}, {"name": "보성", "name_en": "Boseong", "dist": 700, "eta": "06/08 08:00", "elapsed": "50.2h", "type": "supply", "lat": 34.557723, "lon": 126.84813}, {"name": "순천", "name_en": "Suncheon", "dist": 760, "eta": "06/08 11:10", "elapsed": "53.7h", "type": "lunch", "lat": 34.727403, "lon": 126.582141}, {"name": "남원", "name_en": "Namwon", "dist": 820, "eta": "06/08 14:40", "elapsed": "56.8h", "type": "supply", "lat": 35.128805, "lon": 126.622308}, {"name": "전주 CP4", "name_en": "Jeonju CP4", "dist": 880, "eta": "06/08 17:50", "elapsed": "60.0h", "type": "cp", "lat": 35.52139, "lon": 126.80533}, {"name": "🛏 익산#3", "name_en": "Iksan · H Avenue", "dist": 940, "eta": "06/08 21:00", "elapsed": "69.0h", "type": "sleep", "lat": 35.926044, "lon": 126.951191}, {"name": "공주", "name_en": "Gongju", "dist": 1000, "eta": "06/09 06:00", "elapsed": "72.5h", "type": "lunch", "lat": 36.35328, "lon": 127.0546}, {"name": "천안", "name_en": "Cheonan", "dist": 1060, "eta": "06/09 09:30", "elapsed": "75.7h", "type": "supply", "lat": 36.67177, "lon": 127.3923}, {"name": "수원", "name_en": "Suwon", "dist": 1120, "eta": "06/09 12:40", "elapsed": "78.8h", "type": "supply", "lat": 37.02637, "lon": 127.26501}, {"name": "🏁 終點", "name_en": "Finish · Hanam Misari", "dist": 1199, "eta": "06/09 19:00", "elapsed": "85h", "type": "finish", "lat": 37.544719, "lon": 127.119502}];
-const TOTAL_KM     = 1199.4;
-const SPEED_KMH    = 20;
+// ========== DATA ==========
+const START_TIME = new Date('2026-06-06T06:00:00');
+const TARGET_HOURS = 85;
+const CUTOFF_HOURS = 90;
+const AVG_SPEED = 20; // km/h effective
+const TOTAL_KM_RACE = 1199.4;
 
-// ── CP type colours ──
-const CP_COLORS = {
-  start:  '#ff4d1c', finish: '#22c55e', sleep:  '#a855f7',
-  cp:     '#fde047', lunch:  '#f59e0b', supply: '#3b82f6'
-};
+const CHECKPOINTS = [
+  { id:0, name:'起點 하남 미사리', km:0, type:'start', lat:37.545104, lon:127.119165,
+    note:'出發點，하남 미사리火車站附近',
+    cutoffHr:0, stopMin:0 },
+  { id:1, name:'7-ELEVEN 金玉門市', km:70.7, type:'supply', lat:24.46388, lon:121.79784,
+    note:'第一個補給站，飲料食物補充',
+    cutoffHr:6, stopMin:10 },
+  { id:2, name:'7-ELEVEN 新福隆門市', km:163.5, type:'supply', lat:25.01681, lon:121.94474,
+    note:'福隆，知名福隆便當發源地！',
+    cutoffHr:15, stopMin:30 },
+  { id:3, name:'7-ELEVEn 坪林北宜門市', km:241.1, type:'supply', lat:24.93512, lon:121.70903,
+    note:'坪林，可補充包種茶飲料',
+    cutoffHr:24, stopMin:10 },
+  { id:4, name:'遇見・角板山', km:312.2, type:'sleep', lat:24.81822, lon:121.35205,
+    note:'第一住宿站｜最晚晚上10點到達，隔天03:00出發',
+    cutoffHr:36, stopMin:300, arriveBy:'22:00', depart:'03:00', sleepHr:5,
+    hotel:'遇見・角板山景觀民宿', sleepDay:1 },
+  { id:5, name:'7-ELEVEn 羅浮門市', km:315.6, type:'supply', lat:24.79414, lon:121.36402,
+    note:'角板山附近，睡前或出發後補給',
+    cutoffHr:36.5, stopMin:10 },
+  { id:6, name:'全家 苗栗獅潭店', km:404.4, type:'supply', lat:24.53712, lon:120.91829,
+    note:'苗栗獅潭，午餐補給站',
+    cutoffHr:48, stopMin:30 },
+  { id:7, name:'山嵐謐靜露營區', km:482.2, type:'supply', lat:24.07548, lon:120.87718,
+    note:'景觀點，可稍作休息',
+    cutoffHr:56, stopMin:10 },
+  { id:8, name:'草嶺SPA渡假山莊', km:596.9, type:'sleep', lat:23.58541, lon:120.69647,
+    note:'第二住宿站｜最晚午夜12點到達，隔天03:00出發',
+    cutoffHr:72, stopMin:180, arriveBy:'00:00', depart:'03:00', sleepHr:3,
+    hotel:'草嶺SPA渡假山莊', sleepDay:2 },
+  { id:9, name:'一三一四觀景台', km:626.6, type:'photo', lat:23.55955, lon:120.67905,
+    note:'📸 必拍景點！海拔高點，視野壯闊',
+    cutoffHr:75, stopMin:15 },
+  { id:10, name:'7-ELEVEN 崇原門市', km:706.5, type:'supply', lat:23.26533, lon:120.44368,
+    note:'嘉義地區補給站',
+    cutoffHr:84, stopMin:10 },
+  { id:11, name:'7-ELEVEN 水門門市', km:816.6, type:'supply', lat:22.70530, lon:120.63975,
+    note:'高雄地區，重要補給點',
+    cutoffHr:96, stopMin:30 },
+  { id:12, name:'kikiu綠地露營區', km:906.1, type:'sleep', lat:22.12759, lon:120.77555,
+    note:'第三住宿站｜最晚午夜12點到達，隔天03:00出發',
+    cutoffHr:108, stopMin:180, arriveBy:'00:00', depart:'03:00', sleepHr:3,
+    hotel:'kikiu綠地露營區 / 古長老民宿', sleepDay:3 },
+  { id:13, name:'7-ELEVEN 東河門市', km:1040.5, type:'supply', lat:22.96808, lon:121.30435,
+    note:'台東東河，東海岸補給',
+    cutoffHr:120, stopMin:10 },
+  { id:14, name:'玉長隧道', km:1110.3, type:'photo', lat:23.26832, lon:121.36069,
+    note:'📸 必拍景點！秀姑巒溪出海口，壯麗景觀',
+    cutoffHr:126, stopMin:15 },
+  { id:15, name:'全家 豐濱濱海店', km:1163.4, type:'supply', lat:23.59818, lon:121.52298,
+    note:'最後大補給站，最後衝刺補能',
+    cutoffHr:130, stopMin:15 },
+  { id:16, name:'終點 美侖大飯店', km:1219.2, type:'finish', lat:37.544719, lon:127.119502,
+    note:'🏁 終點！花蓮美侖大飯店',
+    cutoffHr:105, stopMin:0 },
+];
 
-// ══ INIT MAP ══
+const CPS = [
+  {id:0,  name:'🚩 起點',      km:0,    type:'start',  lat:37.545104, lon:127.119165, note:'출발 Hanam Misari', cutoffHr:0,   stopMin:0,   etaHr:0,   etaDate:new Date(START_TIME)},
+  {id:1,  name:'이천',          km:50,   type:'supply', lat:37.469689, lon:127.49796,  note:'이천시',           cutoffHr:4,   stopMin:10,  etaHr:2.7, etaDate:new Date(START_TIME.getTime()+2.7*3600000)},
+  {id:2,  name:'음성',          km:100,  type:'supply', lat:37.206812, lon:127.747168, note:'음성군',           cutoffHr:8,   stopMin:10,  etaHr:5.3, etaDate:new Date(START_TIME.getTime()+5.3*3600000)},
+  {id:3,  name:'청주',          km:160,  type:'supply', lat:36.8299,   lon:127.84604,  note:'청주시',           cutoffHr:12,  stopMin:30,  etaHr:8.8, etaDate:new Date(START_TIME.getTime()+8.8*3600000)},
+  {id:4,  name:'대전 CP1',      km:220,  type:'cp',     lat:36.44019,  lon:127.69861,  note:'대전시',           cutoffHr:18,  stopMin:10,  etaHr:12,  etaDate:new Date(START_TIME.getTime()+12*3600000)},
+  {id:5,  name:'논산',          km:280,  type:'supply', lat:36.16209,  lon:127.32455,  note:'논산시',           cutoffHr:22,  stopMin:10,  etaHr:15.2,etaDate:new Date(START_TIME.getTime()+15.2*3600000)},
+  {id:6,  name:'익산 #1',       km:340,  type:'sleep',  lat:35.931129, lon:126.949854, note:'H Avenue Hotel',  cutoffHr:30,  stopMin:170, etaHr:21,  etaDate:new Date(START_TIME.getTime()+21*3600000),  arriveBy:'01:00', depart:'03:00', sleepHr:3, hotel:'H大道飯店', sleepDay:1},
+  {id:7,  name:'김제',          km:390,  type:'supply', lat:35.592013, lon:126.866664, note:'김제시',           cutoffHr:34,  stopMin:30,  etaHr:24,  etaDate:new Date(START_TIME.getTime()+24*3600000)},
+  {id:8,  name:'광주 CP2',      km:450,  type:'cp',     lat:35.183612, lon:126.733199, note:'광주광역시',        cutoffHr:40,  stopMin:10,  etaHr:27.2,etaDate:new Date(START_TIME.getTime()+27.2*3600000)},
+  {id:9,  name:'나주',          km:500,  type:'supply', lat:34.894716, lon:126.59205,  note:'나주시',           cutoffHr:44,  stopMin:10,  etaHr:29.8,etaDate:new Date(START_TIME.getTime()+29.8*3600000)},
+  {id:10, name:'목포 CP3',      km:560,  type:'cp',     lat:34.490282, lon:126.499394, note:'목포시',           cutoffHr:48,  stopMin:30,  etaHr:33.3,etaDate:new Date(START_TIME.getTime()+33.3*3600000)},
+  {id:11, name:'완도 #2',       km:640,  type:'sleep',  lat:34.33578,  lon:126.782398, note:'Wando Nesia Hotel',cutoffHr:58,  stopMin:580, etaHr:47,  etaDate:new Date(START_TIME.getTime()+47*3600000),   arriveBy:'00:00', depart:'05:00', sleepHr:10, hotel:'菀島內西亞飯店', sleepDay:2},
+  {id:12, name:'보성',          km:700,  type:'supply', lat:34.557723, lon:126.84813,  note:'보성군',           cutoffHr:64,  stopMin:10,  etaHr:50.2,etaDate:new Date(START_TIME.getTime()+50.2*3600000)},
+  {id:13, name:'순천',          km:760,  type:'supply', lat:34.727403, lon:126.582141, note:'순천시',           cutoffHr:70,  stopMin:30,  etaHr:53.7,etaDate:new Date(START_TIME.getTime()+53.7*3600000)},
+  {id:14, name:'남원',          km:820,  type:'supply', lat:35.128805, lon:126.622308, note:'남원시',           cutoffHr:74,  stopMin:10,  etaHr:56.8,etaDate:new Date(START_TIME.getTime()+56.8*3600000)},
+  {id:15, name:'전주 CP4',      km:880,  type:'cp',     lat:35.52139,  lon:126.80533,  note:'전주시',           cutoffHr:78,  stopMin:10,  etaHr:60,  etaDate:new Date(START_TIME.getTime()+60*3600000)},
+  {id:16, name:'익산 #3',       km:940,  type:'sleep',  lat:35.926044, lon:126.951191, note:'H Avenue Hotel',  cutoffHr:82,  stopMin:360, etaHr:69,  etaDate:new Date(START_TIME.getTime()+69*3600000),   arriveBy:'00:00', depart:'03:00', sleepHr:6, hotel:'H大道飯店', sleepDay:3},
+  {id:17, name:'공주',          km:1000, type:'supply', lat:36.35328,  lon:127.0546,   note:'공주시',           cutoffHr:85,  stopMin:30,  etaHr:72.5,etaDate:new Date(START_TIME.getTime()+72.5*3600000)},
+  {id:18, name:'천안',          km:1060, type:'supply', lat:36.67177,  lon:127.3923,   note:'천안시',           cutoffHr:88,  stopMin:10,  etaHr:75.7,etaDate:new Date(START_TIME.getTime()+75.7*3600000)},
+  {id:19, name:'수원',          km:1120, type:'supply', lat:37.02637,  lon:127.26501,  note:'수원시',           cutoffHr:90,  stopMin:10,  etaHr:78.8,etaDate:new Date(START_TIME.getTime()+78.8*3600000)},
+  {id:20, name:'🏁 終點',      km:1199, type:'finish', lat:37.544719, lon:127.119502, note:'Hanam Misari',    cutoffHr:90,  stopMin:0,   etaHr:85,  etaDate:new Date(START_TIME.getTime()+85*3600000)},
+];
+
+// ========== UTILS ==========
+function fmtDate(d) {
+  const mo = d.getMonth()+1, day = d.getDate();
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  return `${mo}/${day} ${hh}:${mm}`;
+}
+function fmtHr(hr) {
+  const h = Math.floor(hr), m = Math.round((hr - h) * 60);
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+function cutoffDate(hr) {
+  return new Date(START_TIME.getTime() + hr * 3600000);
+}
+function bufferHr(etaHr, cutoffHr) {
+  return cutoffHr - etaHr;
+}
+function bufferStr(buf) {
+  if (buf < 0) return `<span class="buffer-danger">⚠️ 超時 ${Math.abs(buf).toFixed(1)}h</span>`;
+  if (buf < 2) return `<span class="buffer-warn">⚡ +${buf.toFixed(1)}h</span>`;
+  return `<span class="buffer-ok">✓ +${buf.toFixed(1)}h</span>`;
+}
+function googleMapsUrl(lat, lon, name) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}@${lat},${lon}`;
+}
+function appleMapsUrl(lat, lon, name) {
+  return `https://maps.apple.com/?q=${encodeURIComponent(name)}&ll=${lat},${lon}`;
+}
+function osmUrl(lat, lon) {
+  return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}&zoom=16`;
+}
+
+// ========== MAP ==========
 const map = L.map('map', {
   center: [36.0, 127.3],
   zoom: 7,
-  zoomControl: true,
-  attributionControl: false
+  zoomControl: true
 });
-
-// Dark tile layer
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  maxZoom: 19, subdomains: 'abcd'
+  attribution: '© CartoDB',
+  maxZoom: 19
 }).addTo(map);
 
-// ── Draw route polyline ──
-const routeLine = L.polyline(ROUTE_COORDS, {
-  color: '#ff4d1c', weight: 3, opacity: 0.85,
-  smoothFactor: 1
+// Route
+const ROUTE = [[127.119165,37.545104],[127.11999,37.545886],[127.120464,37.547162],[127.120905,37.548421],[127.121357,37.549684],[127.121846,37.550975],[127.122328,37.552258],[127.122835,37.553531],[127.123543,37.554736],[127.12761,37.561398],[127.132281,37.565017],[127.133626,37.565772],[127.141898,37.567019],[127.143591,37.566897],[127.145249,37.566776],[127.146944,37.566692],[127.148578,37.566781],[127.157778,37.570558],[127.178929,37.579273],[127.18929,37.582958],[127.19854,37.582002],[127.200941,37.580206],[127.202067,37.579268],[127.203156,37.578234],[127.204239,37.577202],[127.205331,37.576168],[127.206421,37.575134],[127.207291,37.573984],[127.208173,37.572831],[127.20907,37.571688],[127.209928,37.570564],[127.21072,37.569372],[127.211512,37.568179],[127.212116,37.56696],[127.212646,37.565712],[127.213159,37.56443],[127.213663,37.563169],[127.214176,37.561885],[127.214692,37.560603],[127.215211,37.55932],[127.215714,37.558073],[127.216217,37.556788],[127.216719,37.555499],[127.217229,37.554244],[127.217757,37.55301],[127.218239,37.55176],[127.21856,37.550447],[127.218544,37.548917],[127.236713,37.543408],[127.238448,37.542454],[127.235345,37.543461],[127.236064,37.544536],[127.237229,37.545516],[127.23838,37.546449],[127.239631,37.54736],[127.241026,37.547242],[127.242155,37.546406],[127.252278,37.541886],[127.265641,37.534163],[127.284658,37.528538],[127.299068,37.526278],[127.302538,37.543668],[127.321478,37.54927],[127.326587,37.546549],[127.33075,37.544888],[127.354998,37.537108],[127.37218,37.525918],[127.373775,37.522753],[127.376064,37.521599],[127.376961,37.520513],[127.38269,37.510748],[127.401059,37.516038],[127.403227,37.516945],[127.409351,37.517006],[127.416998,37.514328],[127.436325,37.514711],[127.439152,37.513453],[127.440521,37.512731],[127.44413,37.51025],[127.44923,37.511276],[127.45097,37.509793],[127.452055,37.507825],[127.453292,37.507023],[127.454742,37.506368],[127.46108,37.50538],[127.474124,37.502925],[127.485477,37.497831],[127.484606,37.495406],[127.48776,37.49017],[127.492509,37.48559],[127.49796,37.469689],[127.505959,37.45132],[127.509892,37.441626],[127.521008,37.441494],[127.525759,37.437649],[127.532609,37.43225],[127.534679,37.42568],[127.543439,37.40638],[127.544969,37.402125],[127.55137,37.38846],[127.54941,37.38033],[127.58253,37.35581],[127.611029,37.334739],[127.604856,37.326243],[127.61381,37.310939],[127.618081,37.301085],[127.63248,37.29914],[127.637551,37.297635],[127.640534,37.296608],[127.641672,37.296083],[127.643033,37.295386],[127.659979,37.28704],[127.669632,37.279044],[127.670509,37.278014],[127.671437,37.276918],[127.67945,37.27137],[127.67582,37.254489],[127.691328,37.253449],[127.69185,37.252209],[127.692965,37.251324],[127.700743,37.241771],[127.701948,37.240859],[127.714949,37.24384],[127.715789,37.24619],[127.715966,37.247335],[127.719284,37.246037],[127.744516,37.242642],[127.751773,37.241226],[127.749371,37.240305],[127.749075,37.239028],[127.748167,37.238135],[127.748138,37.236841],[127.748014,37.235518],[127.748094,37.234185],[127.748049,37.232865],[127.747966,37.231545],[127.747919,37.230202],[127.748982,37.229337],[127.750068,37.22837],[127.750853,37.227196],[127.751415,37.225944],[127.751738,37.224641],[127.751863,37.223312],[127.75184,37.221976],[127.751691,37.220634],[127.751301,37.219391],[127.750721,37.218134],[127.750158,37.216897],[127.749585,37.215629],[127.749023,37.214389],[127.748448,37.213122],[127.747899,37.211891],[127.747343,37.210619],[127.746946,37.209367],[127.746933,37.208092],[127.747168,37.206812],[127.75472,37.171249],[127.75948,37.164409],[127.770919,37.154009],[127.79611,37.12547],[127.80692,37.112459],[127.815599,37.10134],[127.807319,37.09344],[127.804,37.08818],[127.82619,37.078249],[127.84062,37.07775],[127.865489,37.07114],[127.866933,37.047837],[127.854671,37.03203],[127.86466,37.01686],[127.87406,37.00343],[127.87926,36.99557],[127.885856,36.990236],[127.885661,36.987555],[127.88522,36.97483],[127.88197,36.96151],[127.88781,36.94847],[127.875848,36.944185],[127.86905,36.94234],[127.86056,36.93639],[127.85714,36.92714],[127.85952,36.92423],[127.861059,36.917738],[127.86078,36.916411],[127.8626,36.914427],[127.864216,36.914118],[127.866276,36.913141],[127.86752,36.90425],[127.86196,36.90468],[127.85832,36.89727],[127.84655,36.88906],[127.854401,36.870162],[127.86478,36.86701],[127.88222,36.84364],[127.86178,36.83696],[127.84604,36.8299],[127.82662,36.81841],[127.810791,36.809824],[127.80791,36.80729],[127.793158,36.809676],[127.791942,36.807334],[127.79115,36.80302],[127.78817,36.78561],[127.794962,36.767461],[127.79754,36.76418],[127.81445,36.75524],[127.812385,36.744084],[127.80992,36.73339],[127.80521,36.71108],[127.80825,36.70073],[127.79766,36.68854],[127.77734,36.68552],[127.75857,36.67541],[127.74356,36.66467],[127.73802,36.658937],[127.72971,36.6518],[127.72459,36.64246],[127.72451,36.62987],[127.72505,36.62112],[127.72443,36.61331],[127.72377,36.60265],[127.72885,36.59004],[127.729128,36.573651],[127.733273,36.551956],[127.730823,36.550448],[127.72648,36.54457],[127.716226,36.536283],[127.72209,36.52873],[127.716818,36.500191],[127.717385,36.498923],[127.717507,36.497651],[127.717452,36.496329],[127.717482,36.494982],[127.717697,36.489227],[127.71774,36.48788],[127.717783,36.486533],[127.717839,36.485225],[127.717898,36.483879],[127.718309,36.482668],[127.715619,36.481802],[127.714195,36.481153],[127.712674,36.480687],[127.711139,36.480303],[127.709571,36.47993],[127.708007,36.479563],[127.706491,36.479184],[127.705167,36.478634],[127.70315,36.47562],[127.70418,36.46458],[127.69809,36.45492],[127.69861,36.44019],[127.69168,36.43467],[127.68195,36.42684],[127.67251,36.41962],[127.66948,36.40807],[127.668318,36.395127],[127.666728,36.394806],[127.665097,36.394516],[127.66015,36.3939],[127.6509,36.379309],[127.649105,36.375794],[127.648186,36.374681],[127.647174,36.373634],[127.646219,36.372579],[127.645234,36.371489],[127.644249,36.3704],[127.643192,36.369406],[127.641841,36.368689],[127.640225,36.368451],[127.638617,36.368619],[127.62701,36.37295],[127.626199,36.374328],[127.624707,36.374757],[127.623098,36.374822],[127.617936,36.372129],[127.616682,36.371335],[127.61474,36.369049],[127.60846,36.3656],[127.59396,36.35607],[127.58993,36.34459],[127.58797,36.33198],[127.586286,36.323413],[127.58543,36.32235],[127.58412,36.32154],[127.582882,36.320698],[127.582316,36.319739],[127.583101,36.318656],[127.582883,36.317418],[127.583515,36.316233],[127.582921,36.315581],[127.575,36.31353],[127.55429,36.30676],[127.53859,36.29988],[127.52781,36.28697],[127.52859,36.27608],[127.5114,36.25397],[127.51024,36.24397],[127.50521,36.2278],[127.502592,36.224973],[127.502418,36.224332],[127.503305,36.22319],[127.504191,36.222048],[127.49496,36.21401],[127.486979,36.20845],[127.485783,36.208191],[127.484727,36.207158],[127.483674,36.206133],[127.482627,36.205121],[127.48173,36.204076],[127.478414,36.199278],[127.4776,36.198145],[127.475934,36.193494],[127.474865,36.192459],[127.46032,36.18791],[127.43305,36.17323],[127.40709,36.16253],[127.39725,36.16117],[127.397329,36.159436],[127.385707,36.153607],[127.384152,36.15316],[127.383138,36.152252],[127.382238,36.151318],[127.380753,36.150739],[127.379605,36.149826],[127.37042,36.14928],[127.3589,36.15547],[127.34514,36.16537],[127.32455,36.16209],[127.30424,36.16559],[127.2829,36.16036],[127.26862,36.15987],[127.26656,36.15788],[127.25089,36.1477],[127.23553,36.13689],[127.22119,36.12729],[127.19292,36.11958],[127.17914,36.13153],[127.16388,36.13524],[127.146281,36.131658],[127.130921,36.124543],[127.12255,36.11895],[127.103262,36.128616],[127.101919,36.129356],[127.100511,36.130054],[127.09986,36.129761],[127.099738,36.128432],[127.098895,36.127294],[127.098643,36.125978],[127.098372,36.124685],[127.097937,36.123429],[127.098283,36.122177],[127.097701,36.104656],[127.093307,36.100009],[127.09103,36.09169],[127.08971,36.075819],[127.089068,36.07459],[127.087668,36.073526],[127.082589,36.065637],[127.081669,36.064534],[127.080497,36.063577],[127.079313,36.062628],[127.077965,36.061893],[127.069062,36.064345],[127.0679,36.063462],[127.06048,36.05989],[127.04491,36.04332],[127.01876,36.04566],[127.01472,36.04144],[127.00828,36.0298],[126.991257,36.024655],[126.990089,36.023737],[126.986664,36.023207],[126.982913,36.022098],[126.980104,36.022153],[126.97876,36.022791],[126.961916,36.027042],[126.95666,36.02244],[126.949405,36.009666],[126.948166,36.008957],[126.946641,36.00862],[126.94533,36.008013],[126.944501,36.006887],[126.944456,36.004766],[126.9443,36.003552],[126.944495,36.002214],[126.944635,36.000906],[126.945143,35.999166],[126.946396,35.998294],[126.947691,35.997462],[126.948483,35.996437],[126.948871,35.995198],[126.949751,35.993116],[126.950827,35.991836],[126.95194,35.990875],[126.95299,35.989875],[126.953825,35.988756],[126.95354,35.96341],[126.949854,35.931129],[126.950353,35.929217],[126.951536,35.928623],[126.951331,35.927296],[126.951179,35.925987],[126.9509,35.924659],[126.95062,35.923331],[126.950549,35.922021],[126.95043,35.920767],[126.949811,35.91957],[126.949571,35.918236],[126.949272,35.916377],[126.94854,35.915194],[126.947667,35.914047],[126.946149,35.913983],[126.944496,35.914135],[126.942843,35.914288],[126.941228,35.914368],[126.939608,35.914377],[126.937995,35.914287],[126.936357,35.914264],[126.934723,35.914105],[126.933088,35.913852],[126.931435,35.913368],[126.933839,35.907515],[126.933989,35.906173],[126.934139,35.904831],[126.934289,35.903489],[126.934439,35.902147],[126.934589,35.900805],[126.934782,35.898013],[126.94223,35.88879],[126.947559,35.878399],[126.949225,35.877913],[126.950276,35.876964],[126.951051,35.875835],[126.951739,35.874628],[126.9521,35.87334],[126.95234,35.872023],[126.952448,35.870688],[126.952172,35.869359],[126.951982,35.868069],[126.952278,35.866538],[126.952453,35.865207],[126.953012,35.864043],[126.953514,35.862779],[126.953378,35.861521],[126.952791,35.86036],[126.952332,35.85909],[126.953075,35.858031],[126.954085,35.857024],[126.954725,35.85578],[126.955473,35.854621],[126.956261,35.853665],[126.957058,35.852585],[126.958288,35.850818],[126.958978,35.848021],[126.96277,35.84287],[126.97516,35.82582],[126.974402,35.797747],[126.939476,35.792232],[126.909948,35.765404],[126.907294,35.746107],[126.90238,35.734835],[126.896986,35.730508],[126.895666,35.728383],[126.891936,35.715543],[126.883966,35.697269],[126.882468,35.691296],[126.883691,35.690621],[126.88447,35.689486],[126.885109,35.688242],[126.885725,35.687031],[126.886354,35.685784],[126.886988,35.684552],[126.885308,35.658353],[126.876214,35.639588],[126.87262,35.633571],[126.871849,35.632514],[126.870929,35.626049],[126.868864,35.618601],[126.868302,35.612243],[126.867116,35.597412],[126.866047,35.596412],[126.864763,35.595561],[126.866664,35.592013],[126.865379,35.591162],[126.864056,35.590374],[126.862573,35.589835],[126.844088,35.575068],[126.849161,35.569636],[126.850272,35.568563],[126.851338,35.567532],[126.852614,35.56671],[126.854015,35.566002],[126.855457,35.565339],[126.856899,35.564676],[126.858335,35.564016],[126.858729,35.56226],[126.857804,35.561174],[126.856851,35.560072],[126.855898,35.55897],[126.854862,35.558247],[126.853378,35.558845],[126.851893,35.559442],[126.842813,35.557022],[126.841514,35.556282],[126.836093,35.550817],[126.82614,35.54712],[126.79556,35.51251],[126.7837,35.48403],[126.7857,35.4749],[126.789993,35.465862],[126.791254,35.466045],[126.79513,35.46201],[126.798672,35.464933],[126.81609,35.44163],[126.80589,35.42457],[126.80823,35.3974],[126.80444,35.37516],[126.77866,35.35426],[126.774267,35.350257],[126.781474,35.32376],[126.780486,35.322692],[126.77897,35.3209],[126.780507,35.300634],[126.780185,35.29863],[126.779957,35.297355],[126.779907,35.29605],[126.779924,35.294718],[126.780013,35.293382],[126.77056,35.290588],[126.75583,35.27143],[126.743929,35.252135],[126.74342,35.250853],[126.742911,35.249571],[126.742342,35.248311],[126.741701,35.247097],[126.740947,35.245899],[126.735882,35.225202],[126.736887,35.22251],[126.737712,35.221424],[126.746648,35.215207],[126.753848,35.199378],[126.733199,35.183612],[126.701897,35.170926],[126.699978,35.17005],[126.693793,35.16882],[126.692317,35.168237],[126.690805,35.167701],[126.68724,35.162699],[126.685864,35.162056],[126.684116,35.16183],[126.674779,35.163527],[126.671838,35.158869],[126.671967,35.157584],[126.672577,35.15638],[126.673353,35.15524],[126.674053,35.154058],[126.674544,35.152807],[126.674567,35.151509],[126.67391,35.150605],[126.672263,35.150636],[126.656709,35.14975],[126.633609,35.140869],[126.622179,35.121029],[126.63236,35.11843],[126.64292,35.119899],[126.643939,35.118874],[126.644896,35.117788],[126.645729,35.116683],[126.65662,35.10385],[126.65005,35.08855],[126.64559,35.0608],[126.64595,35.04314],[126.63973,35.02052],[126.6385,35.00785],[126.636172,35.004292],[126.635527,35.002753],[126.63313,34.9908],[126.635709,34.964143],[126.629529,34.962534],[126.615768,34.962514],[126.608322,34.945075],[126.60925,34.944065],[126.609362,34.942905],[126.608469,34.942574],[126.606907,34.942659],[126.605264,34.942609],[126.604059,34.942374],[126.603379,34.92897],[126.5918,34.909449],[126.59205,34.894716],[126.605325,34.872752],[126.608077,34.869721],[126.609269,34.869209],[126.609214,34.868136],[126.609016,34.866874],[126.608969,34.865603],[126.609663,34.863862],[126.606727,34.858558],[126.596117,34.839887],[126.57823,34.824254],[126.564956,34.809756],[126.575641,34.806011],[126.576039,34.804844],[126.576657,34.80364],[126.57706,34.801163],[126.581515,34.797084],[126.571486,34.785569],[126.581219,34.756074],[126.584984,34.745848],[126.582506,34.729268],[126.581729,34.727495],[126.578099,34.726129],[126.576513,34.726134],[126.574334,34.725896],[126.572705,34.726013],[126.571086,34.725911],[126.569628,34.725668],[126.569222,34.724087],[126.566131,34.720832],[126.561564,34.714545],[126.567889,34.69837],[126.56417,34.682295],[126.564942,34.680602],[126.559676,34.657698],[126.549637,34.63654],[126.550713,34.635805],[126.553629,34.632628],[126.548603,34.62767],[126.53351,34.613024],[126.49435,34.586259],[126.46144,34.57401],[126.45705,34.5629],[126.45534,34.55447],[126.463769,34.54206],[126.461814,34.522085],[126.48318,34.4943],[126.499394,34.490282],[126.501028,34.490261],[126.509866,34.493746],[126.51385,34.488239],[126.50048,34.472172],[126.507203,34.453174],[126.506175,34.447233],[126.517997,34.429642],[126.514354,34.41092],[126.521939,34.359659],[126.523464,34.343965],[126.529798,34.332709],[126.524277,34.323833],[126.522859,34.323248],[126.521878,34.322231],[126.520871,34.321181],[126.517559,34.316791],[126.523456,34.312286],[126.524084,34.311342],[126.523505,34.310133],[126.524389,34.305756],[126.525032,34.30452],[126.526504,34.304328],[126.527018,34.303201],[126.527892,34.302188],[126.528453,34.300998],[126.52731,34.300028],[126.527903,34.299237],[126.528489,34.299994],[126.529212,34.302323],[126.529401,34.303573],[126.53081,34.30407],[126.53999,34.30392],[126.54836,34.31054],[126.55492,34.31977],[126.57493,34.32238],[126.59023,34.31704],[126.59965,34.31784],[126.59829,34.33046],[126.59599,34.34269],[126.60425,34.35186],[126.60883,34.35973],[126.61204,34.37148],[126.60977,34.37999],[126.61602,34.39615],[126.62232,34.40653],[126.623632,34.405847],[126.624809,34.404965],[126.625937,34.40399],[126.627055,34.403022],[126.628154,34.402025],[126.629252,34.401028],[126.63868,34.39873],[126.648976,34.393521],[126.650523,34.393089],[126.65167,34.39237],[126.650711,34.39183],[126.64592,34.37829],[126.643894,34.3621],[126.64407,34.35711],[126.64825,34.34422],[126.65672,34.32991],[126.66555,34.32467],[126.67107,34.32407],[126.67716,34.31562],[126.69943,34.30485],[126.71526,34.3023],[126.73441,34.30521],[126.74315,34.30695],[126.74307,34.31866],[126.73428,34.330798],[126.76065,34.33383],[126.77435,34.33417],[126.780919,34.335276],[126.782398,34.33578],[126.78391,34.336204],[126.785476,34.336583],[126.787013,34.33698],[126.788418,34.337603],[126.789781,34.338344],[126.79114,34.339025],[126.792602,34.338937],[126.79195,34.339991],[126.790708,34.340865],[126.789536,34.341767],[126.77422,34.35735],[126.78093,34.37168],[126.780751,34.374701],[126.79253,34.38288],[126.79967,34.39616],[126.805563,34.411422],[126.806454,34.412476],[126.81535,34.42185],[126.82548,34.43732],[126.828244,34.450185],[126.827441,34.4512],[126.83279,34.45952],[126.83898,34.45618],[126.84512,34.45577],[126.85004,34.46079],[126.86708,34.46237],[126.8805,34.46974],[126.881347,34.475571],[126.881228,34.476915],[126.89398,34.49333],[126.897214,34.495196],[126.898549,34.495973],[126.899881,34.496626],[126.91127,34.49141],[126.92559,34.48865],[126.93926,34.48501],[126.942503,34.483338],[126.943954,34.483536],[126.945399,34.483793],[126.946463,34.484707],[126.947805,34.485395],[126.95304,34.4953],[126.96567,34.50709],[126.970553,34.511623],[126.97174,34.512458],[126.972789,34.512965],[126.98619,34.54021],[126.988421,34.545134],[126.9897,34.55366],[126.97703,34.55935],[126.95762,34.55979],[126.93039,34.56414],[126.90819,34.56415],[126.89303,34.565],[126.88344,34.56966],[126.88109,34.56892],[126.87601,34.5664],[126.86318,34.56442],[126.84813,34.557723],[126.83828,34.56486],[126.81479,34.56986],[126.7937,34.58621],[126.79075,34.61324],[126.793173,34.620852],[126.794453,34.62167],[126.795599,34.62248],[126.796035,34.623743],[126.795339,34.624816],[126.794134,34.625674],[126.77757,34.64009],[126.75995,34.63191],[126.73804,34.60948],[126.72633,34.58928],[126.71211,34.5775],[126.689064,34.57348],[126.687646,34.573848],[126.6833,34.57363],[126.674181,34.571362],[126.66145,34.56949],[126.6389,34.56586],[126.63298,34.56725],[126.62032,34.57031],[126.60727,34.57094],[126.582512,34.579774],[126.56342,34.58418],[126.55881,34.59435],[126.56731,34.6013],[126.57037,34.61793],[126.55761,34.62424],[126.554383,34.631839],[126.552532,34.63368],[126.550242,34.636133],[126.549532,34.637552],[126.55793,34.67136],[126.565001,34.681306],[126.56778,34.688379],[126.562981,34.707569],[126.561729,34.715016],[126.568218,34.722929],[126.569246,34.7239],[126.569082,34.725188],[126.570146,34.725773],[126.571431,34.725952],[126.573022,34.726008],[126.575723,34.725658],[126.577255,34.725177],[126.578488,34.725457],[126.582141,34.727403],[126.585297,34.730902],[126.581531,34.755276],[126.574805,34.763968],[126.573038,34.767408],[126.573716,34.768635],[126.57435,34.769844],[126.576176,34.774475],[126.573103,34.788359],[126.581435,34.799034],[126.577046,34.801343],[126.576511,34.803774],[126.575992,34.805005],[126.574099,34.806839],[126.567825,34.812263],[126.594503,34.835126],[126.598421,34.845182],[126.610064,34.862435],[126.609816,34.863686],[126.60935,34.864978],[126.609111,34.86657],[126.60923,34.867902],[126.609428,34.869046],[126.60837,34.869826],[126.601224,34.87963],[126.593185,34.897181],[126.593716,34.913577],[126.60658,34.942596],[126.608193,34.942601],[126.609254,34.942631],[126.609401,34.943841],[126.60842,34.944832],[126.616375,34.962912],[126.626256,34.964918],[126.629414,34.962631],[126.635764,34.963197],[126.63208,34.99043],[126.63595,35.00163],[126.63658,35.01737],[126.64461,35.03764],[126.64408,35.05705],[126.64872,35.08498],[126.650246,35.088741],[126.650779,35.089925],[126.65439,35.09714],[126.64597,35.116111],[126.645353,35.117311],[126.64037,35.12063],[126.62942,35.1178],[126.622308,35.128805],[126.64238,35.1436],[126.664624,35.150183],[126.672812,35.150625],[126.674409,35.15062],[126.674646,35.151954],[126.674476,35.153252],[126.673828,35.154468],[126.6731,35.155638],[126.672292,35.156765],[126.671878,35.157991],[126.671898,35.159315],[126.675045,35.163384],[126.68465,35.161765],[126.686409,35.16222],[126.690287,35.165975],[126.692015,35.16813],[126.693511,35.16868],[126.699648,35.170053],[126.700948,35.170626],[126.725843,35.179809],[126.75065,35.195639],[126.747645,35.214263],[126.746697,35.215288],[126.73802,35.2212],[126.735919,35.225087],[126.740871,35.245779],[126.741626,35.246977],[126.74228,35.248186],[126.74286,35.249443],[126.743369,35.250725],[126.743878,35.252007],[126.75567,35.27097],[126.770091,35.289722],[126.780333,35.292176],[126.780599,35.300368],[126.779571,35.321736],[126.780588,35.322798],[126.781572,35.323868],[126.774398,35.350338],[126.78034,35.35533],[126.8025,35.38214],[126.80795,35.39862],[126.80784,35.42622],[126.81592,35.4436],[126.798574,35.465036],[126.79385,35.4617],[126.791012,35.466203],[126.789687,35.465945],[126.78448,35.47675],[126.78396,35.4873],[126.80533,35.52139],[126.834629,35.549877],[126.83809,35.5541],[126.852487,35.559203],[126.853971,35.558606],[126.855326,35.558308],[126.856279,35.55941],[126.857232,35.560513],[126.858185,35.561615],[126.859102,35.562705],[126.85347,35.56628],[126.848841,35.569967],[126.847797,35.571003],[126.846732,35.572035],[126.845845,35.573138],[126.844961,35.574277],[126.843906,35.575286],[126.862611,35.589783],[126.864139,35.590273],[126.865441,35.591027],[126.866698,35.591861],[126.867983,35.592706],[126.86923,35.593536],[126.866017,35.598564],[126.868591,35.61346],[126.868845,35.618644],[126.871025,35.626766],[126.872023,35.632952],[126.87303,35.633936],[126.876213,35.647453],[126.888841,35.669679],[126.886753,35.684995],[126.886123,35.686242],[126.885494,35.687488],[126.884875,35.688698],[126.884236,35.689942],[126.883709,35.691022],[126.883839,35.696879],[126.890294,35.710092],[126.895856,35.726253],[126.89649,35.729865],[126.89866,35.731425],[126.899306,35.735243],[126.902598,35.734489],[126.907874,35.754162],[126.914964,35.778182],[126.948209,35.797199],[126.98266,35.81489],[126.96894,35.83082],[126.959765,35.846445],[126.957143,35.852419],[126.956374,35.853546],[126.955552,35.854502],[126.954789,35.855656],[126.954149,35.856899],[126.953156,35.857913],[126.952368,35.859001],[126.952715,35.86024],[126.953263,35.861423],[126.953524,35.862644],[126.953052,35.863912],[126.952463,35.865093],[126.952307,35.866405],[126.952061,35.867725],[126.952458,35.870252],[126.952135,35.873208],[126.951784,35.874525],[126.951097,35.875705],[126.95034,35.876849],[126.949365,35.877839],[126.947883,35.878405],[126.94294,35.88772],[126.935096,35.897822],[126.934768,35.899164],[126.934624,35.900492],[126.934474,35.901834],[126.934324,35.903176],[126.934174,35.904518],[126.934024,35.90586],[126.933874,35.907202],[126.933724,35.908544],[126.933197,35.913869],[126.934832,35.914122],[126.936468,35.914274],[126.938105,35.914281],[126.939718,35.914388],[126.941339,35.914365],[126.942953,35.914278],[126.944606,35.914125],[126.946259,35.913972],[126.947725,35.914123],[126.948598,35.91527],[126.949308,35.916461],[126.949587,35.918325],[126.949827,35.919659],[126.950481,35.920846],[126.950546,35.922111],[126.950638,35.923419],[126.950918,35.924748],[126.951191,35.926044],[126.951341,35.927386],[126.951563,35.92871],[126.950249,35.929248],[126.949344,35.929941],[126.94989,35.931214],[126.950436,35.932487],[126.950982,35.93376],[126.953294,35.93925],[126.953814,35.940488],[126.954338,35.941767],[126.954861,35.943046],[126.955384,35.944325],[126.955908,35.945604],[126.956431,35.946884],[126.956937,35.948121],[126.957466,35.949399],[126.957994,35.950676],[126.958523,35.951954],[126.959052,35.953232],[126.95958,35.95451],[126.960109,35.955787],[126.96063,35.957058],[126.96115,35.958338],[126.961669,35.959618],[126.962189,35.960899],[126.962708,35.962179],[126.963228,35.963459],[126.963747,35.964739],[126.964264,35.966014],[126.964776,35.967297],[126.965287,35.968579],[126.965799,35.969861],[126.965188,35.971046],[126.964019,35.971946],[126.962759,35.972827],[126.962084,35.974006],[126.961241,35.975116],[126.960025,35.976027],[126.958795,35.976934],[126.957684,35.977885],[126.957959,35.979141],[126.95833,35.980385],[126.957306,35.981019],[126.956484,35.98201],[126.95603,35.983274],[126.955571,35.984569],[126.955092,35.985852],[126.954591,35.987138],[126.95451,35.988839],[126.953476,35.989987],[126.952209,35.990745],[126.951024,35.991678],[126.949859,35.992909],[126.949581,35.994046],[126.94889,35.995064],[126.948554,35.996315],[126.947824,35.997382],[126.946515,35.9982],[126.945283,35.999093],[126.944649,36.000771],[126.944508,36.002114],[126.94432,36.003418],[126.944365,36.004653],[126.944747,36.005857],[126.94444,36.007049],[126.945504,36.00798],[126.946832,36.00865],[126.948434,36.008948],[126.95564,36.02099],[126.97978,36.02237],[126.989308,36.023355],[126.990574,36.024167],[126.99874,36.02553],[127.0117,36.03389],[127.01986,36.05081],[127.03106,36.07598],[127.01906,36.09261],[127.017444,36.101217],[127.01872,36.11705],[127.021621,36.121563],[127.021875,36.122803],[127.022298,36.124064],[127.02285,36.125336],[127.023392,36.126601],[127.023709,36.127891],[127.022842,36.128835],[127.02144,36.130265],[127.021297,36.131563],[127.021175,36.132907],[127.021058,36.134248],[127.020946,36.135592],[127.020753,36.136918],[127.019796,36.137964],[127.019113,36.139149],[127.018886,36.140398],[127.019143,36.141684],[127.018643,36.142841],[127.017797,36.144003],[127.016957,36.145138],[127.01609,36.146289],[127.015337,36.147468],[127.014483,36.148551],[127.013401,36.149577],[127.012235,36.151809],[127.01726,36.15957],[127.01749,36.18065],[127.007837,36.19278],[127.006254,36.193063],[127.00465,36.193313],[127.003616,36.194216],[127.00397,36.19729],[126.99974,36.21969],[126.99469,36.24643],[127.006963,36.257591],[127.01894,36.26978],[127.03532,36.28378],[127.03712,36.29588],[127.04124,36.30537],[127.04685,36.31577],[127.04234,36.32912],[127.045729,36.332931],[127.046628,36.334019],[127.046697,36.335254],[127.047169,36.337246],[127.047819,36.338443],[127.048473,36.339661],[127.049075,36.340916],[127.049671,36.342176],[127.050317,36.34339],[127.050893,36.344627],[127.051426,36.345905],[127.051954,36.347169],[127.052521,36.348437],[127.0546,36.35328],[127.06442,36.36461],[127.075943,36.381502],[127.08047,36.39311],[127.09339,36.40534],[127.10336,36.42285],[127.119254,36.441372],[127.120371,36.444584],[127.123251,36.463364],[127.123389,36.464865],[127.124155,36.466266],[127.125063,36.467363],[127.12597,36.468464],[127.126851,36.469552],[127.127934,36.470084],[127.129292,36.469296],[127.130647,36.468503],[127.131829,36.467608],[127.14199,36.46187],[127.15754,36.45477],[127.18535,36.4477],[127.20581,36.43851],[127.22382,36.440246],[127.224496,36.441452],[127.224837,36.442771],[127.224805,36.444083],[127.22482,36.445404],[127.224879,36.446707],[127.225119,36.44804],[127.22552,36.449344],[127.226001,36.450604],[127.226773,36.451799],[127.227582,36.452964],[127.228515,36.454084],[127.229472,36.455173],[127.230566,36.456194],[127.231701,36.457175],[127.232872,36.458139],[127.234025,36.459064],[127.235327,36.459912],[127.236593,36.460726],[127.23806,36.461376],[127.239528,36.462027],[127.240995,36.462677],[127.242149,36.462817],[127.25271,36.46489],[127.26235,36.47771],[127.2712,36.48229],[127.28976,36.49159],[127.30432,36.51031],[127.31982,36.51757],[127.3182,36.52255],[127.30198,36.53035],[127.297541,36.531356],[127.296574,36.532325],[127.295744,36.533442],[127.29536,36.54235],[127.29759,36.55896],[127.30026,36.57593],[127.30038,36.5819],[127.32264,36.58606],[127.34051,36.60359],[127.34961,36.62244],[127.35853,36.63898],[127.3923,36.67177],[127.403802,36.681204],[127.409438,36.682159],[127.411115,36.682246],[127.412791,36.682333],[127.414445,36.682406],[127.416123,36.682477],[127.417434,36.68284],[127.418957,36.683005],[127.420633,36.683099],[127.422279,36.683208],[127.423949,36.683356],[127.425542,36.68338],[127.427112,36.683749],[127.428764,36.683993],[127.430417,36.684237],[127.432063,36.684487],[127.433713,36.684739],[127.45711,36.69779],[127.47034,36.71458],[127.46247,36.73654],[127.44981,36.75115],[127.44753,36.76758],[127.435112,36.782085],[127.43531,36.78746],[127.43051,36.80847],[127.40683,36.82561],[127.39291,36.84208],[127.3758,36.8616],[127.38238,36.87481],[127.36578,36.88663],[127.35718,36.90309],[127.34006,36.9115],[127.32978,36.9238],[127.32132,36.93306],[127.32005,36.93801],[127.3164,36.94967],[127.31007,36.96074],[127.31604,36.97201],[127.30997,36.97794],[127.29313,36.99477],[127.27976,37.00533],[127.27064,37.01112],[127.26501,37.02637],[127.26188,37.04859],[127.260642,37.050156],[127.256129,37.065708],[127.251012,37.106387],[127.213973,37.114886],[127.196759,37.13974],[127.199788,37.144313],[127.202326,37.145453],[127.20428,37.184791],[127.201133,37.195928],[127.199871,37.196602],[127.19142,37.19326],[127.181886,37.199446],[127.171114,37.220181],[127.179254,37.237174],[127.179052,37.238197],[127.177387,37.238442],[127.175742,37.238742],[127.174445,37.239378],[127.166274,37.24489],[127.166807,37.248386],[127.167614,37.249494],[127.168138,37.250694],[127.167854,37.252182],[127.166914,37.253278],[127.165894,37.254327],[127.164844,37.255384],[127.16395,37.256492],[127.162253,37.258368],[127.161037,37.25926],[127.159851,37.260176],[127.16151,37.261865],[127.160379,37.262811],[127.159268,37.263809],[127.158259,37.264891],[127.157493,37.266069],[127.156792,37.267255],[127.156143,37.268463],[127.155857,37.270543],[127.156983,37.271481],[127.157696,37.273448],[127.157568,37.27478],[127.156988,37.27598],[127.155763,37.276911],[127.156344,37.27954],[127.15507,37.280425],[127.154022,37.281398],[127.153706,37.281966],[127.153689,37.283197],[127.141724,37.284179],[127.140472,37.284147],[127.139329,37.284997],[127.138002,37.2857],[127.136598,37.289347],[127.135027,37.289557],[127.133949,37.289891],[127.131294,37.291199],[127.128103,37.29111],[127.126226,37.290744],[127.124632,37.291009],[127.11388,37.292986],[127.111964,37.294392],[127.110702,37.295195],[127.109303,37.295837],[127.108422,37.296935],[127.107627,37.29796],[127.10615,37.300874],[127.105109,37.302012],[127.10443,37.312567],[127.106752,37.320677],[127.108142,37.321448],[127.110076,37.323661],[127.110951,37.324957],[127.110986,37.326233],[127.110837,37.327508],[127.11302,37.33998],[127.12045,37.35078],[127.10854,37.37683],[127.115131,37.383649],[127.123826,37.396862],[127.12385,37.398209],[127.12286,37.41043],[127.118946,37.416695],[127.118381,37.417943],[127.11723,37.42161],[127.11846,37.43057],[127.120551,37.473439],[127.090687,37.496923],[127.073888,37.500386],[127.068513,37.507156],[127.067999,37.51115],[127.069177,37.516303],[127.069022,37.517645],[127.069991,37.519394],[127.071592,37.51961],[127.073246,37.519398],[127.074907,37.519115],[127.09109,37.51926],[127.10143,37.52361],[127.11037,37.53526],[127.118929,37.54349],[127.119502,37.544719],[127.12444,37.54567]];
+
+const routeLatLngs = ROUTE.map(c => [c[1], c[0]]);
+L.polyline(routeLatLngs, {
+  color: '#ff4d1c', weight: 3, opacity: 0.85
 }).addTo(map);
 
-// ── Add checkpoint markers ──
-CHECKPOINTS.forEach((cp, idx) => {
-  const col = CP_COLORS[cp.type] || '#3b82f6';
-  const isSleep = cp.type === 'sleep';
-  const isStart = cp.type === 'start';
-  const isFinish = cp.type === 'finish';
-  const size = (isStart || isFinish) ? 14 : isSleep ? 12 : 9;
+// Checkpoint markers
+const cpIcons = {
+  start:  { color: '#ff4d1c', emoji: '🚩' },
+  supply: { color: '#3b82f6', emoji: '🏪' },
+  sleep:  { color: '#a855f7', emoji: '🛌' },
+  cp:     { color: '#fde047', emoji: '📍' },
+  lunch:  { color: '#c9a84c', emoji: '🍱' },
+  finish: { color: '#22c55e', emoji: '🏁' },
+};
 
+CPS.forEach(cp => {
+  const ic = cpIcons[cp.type] || cpIcons.supply;
   const icon = L.divIcon({
     className: '',
-    html: `<div style="width:${size}px;height:${size}px;background:${col};border:2px solid rgba(255,255,255,0.8);border-radius:50%;box-shadow:0 0 6px ${col}88;"></div>`,
-    iconSize: [size, size],
-    iconAnchor: [size/2, size/2]
+    html: `<div style="
+      background:${ic.color};
+      border:2px solid #fff;
+      border-radius:50%;
+      width:24px;height:24px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:12px;
+      box-shadow:0 0 8px ${ic.color};
+    ">${ic.emoji}</div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
   });
-
-  const marker = L.marker([cp.lat, cp.lon], { icon }).addTo(map);
-
-  const typeLabel = { start:'出發', finish:'終點', sleep:'🛏 住宿', cp:'📍 CP', lunch:'🍱 午餐', supply:'補給' }[cp.type] || '';
-  marker.bindPopup(`
-    <div class="cp-popup-name">${cp.name} &nbsp;<span style="font-size:11px;color:#6b7a90;font-family:monospace">${cp.dist}km</span></div>
-    <div class="cp-popup-row"><span>預計抵達</span><span>${cp.eta}</span></div>
-    <div class="cp-popup-row"><span>累計時數</span><span>${cp.elapsed}</span></div>
-    <div class="cp-popup-row"><span>性質</span><span>${typeLabel}</span></div>
-    ${cp.name_en ? `<div style="font-size:10px;color:#6b7a90;margin-top:6px;font-family:monospace">${cp.name_en}</div>` : ''}
-  `, { maxWidth: 220 });
+  L.marker([cp.lat, cp.lon], { icon })
+    .addTo(map)
+    .bindPopup(`
+      <div style="background:#111827;color:#e2e8f0;border-radius:8px;padding:12px;min-width:200px;font-family:sans-serif;">
+        <strong style="color:#00d4ff;font-size:14px;">${cp.name}</strong><br>
+        <span style="color:#64748b;font-size:12px;">${cp.km} km</span><br>
+        ${cp.etaHr > 0 ? `<span style="color:#39ff14;font-size:12px;">預計: ${fmtDate(cp.etaDate)}</span><br>` : ''}
+        ${cp.cutoffHr > 0 ? `<span style="color:#ffd700;font-size:12px;">關門: ${fmtDate(cutoffDate(cp.cutoffHr))}</span><br>` : ''}
+        <span style="color:#94a3b8;font-size:11px;">${cp.note}</span><br>
+        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+          <a href="https://map.naver.com/v5/search/${encodeURIComponent(cp.name)}" target="_blank" style="background:#03c75a;color:#fff;padding:3px 8px;border-radius:4px;font-size:11px;text-decoration:none;">Naver</a>
+          <a href="${googleMapsUrl(cp.lat, cp.lon, cp.name)}" target="_blank" style="background:#4285f4;color:#fff;padding:3px 8px;border-radius:4px;font-size:11px;text-decoration:none;">Google</a>
+          <a href="https://map.kakao.com/?q=${encodeURIComponent(cp.name)}" target="_blank" style="background:#f8c300;color:#000;padding:3px 8px;border-radius:4px;font-size:11px;text-decoration:none;">Kakao</a>
+        </div>
+      </div>
+    `, { maxWidth: 300 });
 });
 
-// ── GPS marker (hidden initially) ──
-let gpsMarker = null;
-let gpsCircle = null;
-let watchId   = null;
-let lastKnownDist = null;
+// GPS marker
+let gpsMarker = null, gpsWatch = null;
+let userLat = null, userLon = null;
 
-function createGpsMarker(lat, lon, acc) {
-  const icon = L.divIcon({
-    className: '',
-    html: `<div style="width:18px;height:18px;background:#22c55e;border:3px solid #fff;border-radius:50%;box-shadow:0 0 10px #22c55e,0 0 20px #22c55e66;animation:pulse 1.5s ease-in-out infinite;"></div>
-    <style>@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}</style>`,
-    iconSize: [18, 18],
-    iconAnchor: [9, 9]
-  });
-  if (gpsMarker) { map.removeLayer(gpsMarker); map.removeLayer(gpsCircle); }
-  gpsCircle = L.circle([lat, lon], { radius: acc, color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.08, weight: 1 }).addTo(map);
-  gpsMarker = L.marker([lat, lon], { icon, zIndexOffset: 1000 }).addTo(map);
-  gpsMarker.bindPopup('<div style="font-family:monospace;font-size:12px;color:#22c55e;font-weight:700">📍 你的位置<br><span style="color:#6b7a90">精確度: ' + Math.round(acc) + 'm</span></div>');
-}
-
-// ── Project GPS onto route (find nearest route point) ──
-function haversineKm(a, b) {
-  const R = 6371;
-  const dLat = (b[0]-a[0]) * Math.PI/180;
-  const dLon = (b[1]-a[1]) * Math.PI/180;
-  const x = Math.sin(dLat/2)**2 + Math.cos(a[0]*Math.PI/180)*Math.cos(b[0]*Math.PI/180)*Math.sin(dLon/2)**2;
-  return R * 2 * Math.asin(Math.sqrt(x));
-}
-
-function findNearestOnRoute(lat, lon) {
-  let bestIdx = 0, bestDist = Infinity;
-  for (let i = 0; i < ROUTE_COORDS.length; i++) {
-    const d = haversineKm([lat, lon], ROUTE_COORDS[i]);
-    if (d < bestDist) { bestDist = d; bestIdx = i; }
-  }
-  return { idx: bestIdx, cumKm: ROUTE_CUM[bestIdx], offRoutKm: bestDist };
-}
-
-function findNextCP(cumKm) {
-  for (let i = 0; i < CHECKPOINTS.length; i++) {
-    if (CHECKPOINTS[i].dist > cumKm) return { next: CHECKPOINTS[i], prev: CHECKPOINTS[i-1] || CHECKPOINTS[0] };
-  }
-  return { next: CHECKPOINTS[CHECKPOINTS.length-1], prev: CHECKPOINTS[CHECKPOINTS.length-2] };
-}
-
-function updateStatus(lat, lon, acc) {
-  const { idx, cumKm, offRoutKm } = findNearestOnRoute(lat, lon);
-  const remain = Math.max(0, TOTAL_KM - cumKm);
-  const { next, prev } = findNextCP(cumKm);
-  const distToNext = Math.max(0, next.dist - cumKm);
-  const etaMins = distToNext / SPEED_KMH * 60;
-  const etaHours = Math.floor(etaMins / 60);
-  const etaMinsRem = Math.round(etaMins % 60);
-  const etaStr = etaHours > 0 ? `${etaHours}h${etaMinsRem.toString().padStart(2,'0')}m` : `${Math.round(etaMins)}min`;
-
-  // Compute wall-clock ETA
-  const now = new Date();
-  const etaDate = new Date(now.getTime() + etaMins * 60000);
-  const etaTime = etaDate.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
-
-  document.getElementById('sv-dist').textContent = cumKm.toFixed(1);
-  document.getElementById('sv-remain').textContent = remain.toFixed(1);
-  document.getElementById('sv-next-dist').textContent = distToNext.toFixed(1);
-  document.getElementById('sv-next-eta').textContent = `${etaStr} (${etaTime})`;
-
-  document.getElementById('ncp-name').textContent = next.name;
-  document.getElementById('ncp-name2').textContent = next.name;
-  document.getElementById('ncp-detail').textContent = `計劃抵達 ${next.eta}`;
-  document.getElementById('prev-cp-name').textContent = prev.name;
-
-  const segLen = next.dist - prev.dist;
-  const segDone = Math.max(0, cumKm - prev.dist);
-  const pct = segLen > 0 ? Math.min(100, segDone / segLen * 100) : 0;
-  document.getElementById('progress-fill').style.width = pct.toFixed(1) + '%';
-  document.getElementById('ncp-pct').textContent = pct.toFixed(0) + '%';
-
-  const offNote = offRoutKm > 0.5 ? ` · ⚠️ 偏離路線 ${offRoutKm.toFixed(1)}km` : '';
-  document.getElementById('gps-status').className = 'ok';
-  document.getElementById('gps-status').textContent = `✓ GPS 定位中 · 精確度 ±${Math.round(acc)}m · 最後更新 ${new Date().toLocaleTimeString('zh-TW')}${offNote}`;
-
-  document.getElementById('status-card').classList.add('visible');
-  lastKnownDist = cumKm;
-}
-
-function startLocating() {
-  const btn = document.getElementById('locate-btn');
+function startGPS() {
   if (!navigator.geolocation) {
-    document.getElementById('gps-status').className = 'err';
-    document.getElementById('gps-status').textContent = '❌ 此瀏覽器不支援 GPS 定位';
+    alert('此設備不支援 GPS');
     return;
   }
-  btn.disabled = true;
-  btn.innerHTML = '<span>⏳</span> 定位中…';
-  document.getElementById('gps-status').textContent = '⏳ 正在取得 GPS 位置，請稍候…';
+  document.getElementById('gpsDot').classList.add('active');
+  document.getElementById('gpsStatusText').textContent = '定位中...';
 
-  if (watchId) navigator.geolocation.clearWatch(watchId);
+  // If already tracking, just re-center to current location
+  if (gpsWatch !== null) {
+    if (userLat !== null) {
+      map.setView([userLat, userLon], 13);
+      document.getElementById('gpsStatusText').textContent = '已定位 ✓（已回到位置）';
+    }
+    return;
+  }
 
-  watchId = navigator.geolocation.watchPosition(
-    (pos) => {
-      const { latitude: lat, longitude: lon, accuracy: acc } = pos.coords;
-      createGpsMarker(lat, lon, acc);
-      map.setView([lat, lon], Math.max(map.getZoom(), 11));
-      updateStatus(lat, lon, acc);
-      btn.innerHTML = '<span>📍</span> 追蹤中';
-      btn.disabled = false;
-      btn.style.background = '#22c55e';
-    },
-    (err) => {
-      btn.disabled = false;
-      btn.innerHTML = '<span>📍</span> 重試定位';
-      document.getElementById('gps-status').className = 'err';
-      const msgs = { 1:'❌ 請允許瀏覽器存取位置權限', 2:'❌ 無法取得位置訊號（GPS 信號弱？）', 3:'❌ 定位逾時，請重試' };
-      document.getElementById('gps-status').textContent = msgs[err.code] || '❌ 定位失敗';
-    },
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
-  );
+  gpsWatch = navigator.geolocation.watchPosition(pos => {
+    const isFirstFix = userLat === null;
+    userLat = pos.coords.latitude;
+    userLon = pos.coords.longitude;
+    document.getElementById('gpsStatusText').textContent = '已定位 ✓（再按一次可回到定位點）';
+    document.getElementById('gpsCoords').textContent = `${userLat.toFixed(4)}, ${userLon.toFixed(4)}`;
+
+    if (!gpsMarker) {
+      const icon = L.divIcon({
+        className: '',
+        html: `<div style="
+          background:#00ff88;
+          border:3px solid #fff;
+          border-radius:50%;
+          width:18px;height:18px;
+          box-shadow:0 0 12px #00ff88;
+          animation:pulse 1.5s infinite;
+        "></div>`,
+        iconSize: [18, 18], iconAnchor: [9, 9]
+      });
+      gpsMarker = L.marker([userLat, userLon], { icon }).addTo(map);
+    } else {
+      gpsMarker.setLatLng([userLat, userLon]);
+    }
+
+    // Only auto-center on the very first GPS fix
+    if (isFirstFix) {
+      map.setView([userLat, userLon], 13);
+    }
+
+    // Find nearest CP and update distance
+    const nearestDist = findNearestRouteDist(userLat, userLon);
+    if (nearestDist !== null) {
+      document.getElementById('gpsDist').textContent = `📍 估算位置: ~${nearestDist.toFixed(1)} km`;
+      updateProgress(nearestDist);
+    }
+  }, err => {
+    document.getElementById('gpsStatusText').textContent = '定位失敗: ' + err.message;
+  }, { enableHighAccuracy: true, maximumAge: 10000 });
+}
+
+function stopGPS() {
+  if (gpsWatch) navigator.geolocation.clearWatch(gpsWatch);
+  gpsWatch = null;
+  document.getElementById('gpsDot').classList.remove('active');
+  document.getElementById('gpsStatusText').textContent = '已停止';
+}
+
+function findNearestRouteDist(lat, lon) {
+  let minDist = Infinity, minIdx = 0;
+  for (let i = 0; i < ROUTE.length; i++) {
+    const dx = ROUTE[i][0] - lon, dy = ROUTE[i][1] - lat;
+    const d = dx*dx + dy*dy;
+    if (d < minDist) { minDist = d; minIdx = i; }
+  }
+  // Approximate distance as fraction of total route
+  return (minIdx / ROUTE.length) * 1199.4;
+}
+
+function updateProgress(km) {
+  const pct = Math.min(100, (km / 1199.4) * 100);
+  document.getElementById('pctDone').textContent = pct.toFixed(1) + '%';
+  document.getElementById('mainProgressBar').style.width = pct + '%';
+  document.getElementById('riddenKm').textContent = km.toFixed(1) + ' km';
+  document.getElementById('remainKm').textContent = (1199.4 - km).toFixed(1) + ' km';
+
+  // Find next CP
+  let nextCp = null;
+  for (let cp of CPS) {
+    if (cp.km > km) { nextCp = cp; break; }
+  }
+  if (!nextCp) nextCp = CPS[CPS.length-1];
+  if (nextCp) {
+    document.getElementById('nextCpName').textContent = '下一站：' + nextCp.name;
+    document.getElementById('nextCpDist').textContent = `距離：${(nextCp.km - km).toFixed(1)} km 剩餘`;
+    document.getElementById('nextCpETA').textContent = nextCp.etaDate ? fmtDate(nextCp.etaDate) : '--';
+    if (nextCp.cutoffHr > 0) {
+      document.getElementById('nextCpCutoff').textContent = fmtDate(cutoffDate(nextCp.cutoffHr));
+      const buf = bufferHr(nextCp.etaHr, nextCp.cutoffHr);
+      const el = document.getElementById('nextCpBuffer');
+      el.innerHTML = bufferStr(buf);
+    }
+  }
+}
+
+// ========== COUNTDOWN ==========
+function updateCountdown() {
+  const now = new Date();
+  const targetFinish = new Date(START_TIME.getTime() + TARGET_HOURS * 3600000);
+  const diff = targetFinish - now;
+  if (diff > 0) {
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    document.getElementById('timeRemaining').textContent = `${String(h).padStart(3,'0')}:${String(m).padStart(2,'0')}`;
+  } else {
+    document.getElementById('timeRemaining').textContent = '🏁 已完賽';
+  }
+}
+setInterval(updateCountdown, 1000);
+updateCountdown();
+
+// ========== SCHEDULE TABLE ==========
+function buildSchedule() {
+  const SCHEDULE = [
+    {day:'D1',    km:0,    name:'🚩 起點 하남 미사리',      name_en:'Start · Hanam Misari',   eta:'06/06 06:00', stop:'—',       elapsed:'0h',    type:'start',  lat:37.545104, lon:127.119165, nq:'하남미사리경정공원'},
+    {day:'D1',    km:50,   name:'이천 (Icheon)',             name_en:'Icheon City',              eta:'06/06 08:30', stop:'+10분',   elapsed:'2.7h',  type:'supply', lat:37.469689, lon:127.49796,  nq:'이천시'},
+    {day:'D1',    km:100,  name:'음성 (Eumseong)',           name_en:'Eumseong County',          eta:'06/06 11:10', stop:'+10분',   elapsed:'5.3h',  type:'supply', lat:37.206812, lon:127.747168, nq:'음성군'},
+    {day:'D1',    km:160,  name:'청주 (Cheongju)',           name_en:'Cheongju City',            eta:'06/06 14:20', stop:'+30분',   elapsed:'8.8h',  type:'lunch',  lat:36.8299,   lon:127.84604,  nq:'청주시'},
+    {day:'D1',    km:220,  name:'대전 CP1',                  name_en:'Daejeon CP1',              eta:'06/06 17:50', stop:'+10분',   elapsed:'12.0h', type:'cp',     lat:36.44019,  lon:127.69861,  nq:'대전시'},
+    {day:'D1',    km:280,  name:'논산 (Nonsan)',             name_en:'Nonsan City',              eta:'06/06 21:00', stop:'+10분',   elapsed:'15.2h', type:'supply', lat:36.16209,  lon:127.32455,  nq:'논산시'},
+    {day:'D1→2',  km:340,  name:'🛏 익산 住宿 #1',          name_en:'Iksan · H Avenue Hotel',   eta:'06/07 00:10', stop:'睡眠 ~2h50m', elapsed:'21.0h', type:'sleep', lat:35.931129, lon:126.949854, nq:'익산+H대로호텔', hotel:'H大道飯店', depart:'03:00 出發'},
+    {day:'D2',    km:390,  name:'김제 (Gimje)',              name_en:'Gimje City',               eta:'06/07 05:30', stop:'+30분',   elapsed:'24.0h', type:'lunch',  lat:35.592013, lon:126.866664, nq:'김제시'},
+    {day:'D2',    km:450,  name:'광주 CP2',                  name_en:'Gwangju CP2',              eta:'06/07 09:00', stop:'+10분',   elapsed:'27.2h', type:'cp',     lat:35.183612, lon:126.733199, nq:'광주광역시'},
+    {day:'D2',    km:500,  name:'나주 (Naju)',               name_en:'Naju City',                eta:'06/07 11:40', stop:'+10분',   elapsed:'29.8h', type:'supply', lat:34.894716, lon:126.59205,  nq:'나주시'},
+    {day:'D2',    km:560,  name:'목포 CP3 🍱',              name_en:'Mokpo CP3',                eta:'06/07 14:50', stop:'+30분',   elapsed:'33.3h', type:'cp',     lat:34.490282, lon:126.499394, nq:'목포시'},
+    {day:'D2→3',  km:640,  name:'🛏 완도 住宿 #2',          name_en:'Wando · Nesia Hotel',      eta:'06/07 19:20', stop:'睡眠 ~9h40m', elapsed:'47.0h', type:'sleep', lat:34.33578,  lon:126.782398, nq:'완도+네시아호텔', hotel:'菀島內西亞飯店 Nesia Hotel', depart:'05:00 出發 ✓ 最長睡眠'},
+    {day:'D3',    km:700,  name:'보성 (Boseong)',            name_en:'Boseong · Tea Fields',     eta:'06/08 08:00', stop:'+10분',   elapsed:'50.2h', type:'supply', lat:34.557723, lon:126.84813,  nq:'보성군'},
+    {day:'D3',    km:760,  name:'순천 (Suncheon)',           name_en:'Suncheon City',            eta:'06/08 11:10', stop:'+30분',   elapsed:'53.7h', type:'lunch',  lat:34.727403, lon:126.582141, nq:'순천시'},
+    {day:'D3',    km:820,  name:'남원 (Namwon)',             name_en:'Namwon · Jirisan',         eta:'06/08 14:40', stop:'+10분',   elapsed:'56.8h', type:'supply', lat:35.128805, lon:126.622308, nq:'남원시'},
+    {day:'D3',    km:880,  name:'전주 CP4',                  name_en:'Jeonju CP4',               eta:'06/08 17:50', stop:'+10분',   elapsed:'60.0h', type:'cp',     lat:35.52139,  lon:126.80533,  nq:'전주시'},
+    {day:'D3→4',  km:940,  name:'🛏 익산 住宿 #3',          name_en:'Iksan · H Avenue Hotel',   eta:'06/08 21:00', stop:'睡眠 ~6h',    elapsed:'69.0h', type:'sleep', lat:35.926044, lon:126.951191, nq:'익산+H대로호텔', hotel:'H大道飯店 H Avenue Hotel', depart:'03:00 出發'},
+    {day:'D4',    km:1000, name:'공주 (Gongju)',             name_en:'Gongju City',              eta:'06/09 06:00', stop:'+30분',   elapsed:'72.5h', type:'lunch',  lat:36.35328,  lon:127.0546,   nq:'공주시'},
+    {day:'D4',    km:1060, name:'천안 (Cheonan)',            name_en:'Cheonan City',             eta:'06/09 09:30', stop:'+10분',   elapsed:'75.7h', type:'supply', lat:36.67177,  lon:127.3923,   nq:'천안시'},
+    {day:'D4',    km:1120, name:'수원 (Suwon)',              name_en:'Suwon City',               eta:'06/09 12:40', stop:'+10분',   elapsed:'78.8h', type:'supply', lat:37.02637,  lon:127.26501,  nq:'수원시'},
+    {day:'D4',    km:1199, name:'🏁 終點 하남 미사리',      name_en:'Finish · Hanam Misari',    eta:'06/09 19:00', stop:'🏆 完賽', elapsed:'85h 🏆', type:'finish', lat:37.544719, lon:127.119502, nq:'하남미사리경정공원'},
+  ];
+  const badgeCls = {start:'badge-start',finish:'badge-finish',sleep:'badge-sleep',cp:'badge-cp',lunch:'badge-lunch',supply:'badge-supply'};
+  const badgeLbl = {start:'🚩 出發',finish:'🏆 完賽',sleep:'🛌 住宿',cp:'📍 CP',lunch:'🍱 午餐',supply:'補給'};
+  const rowCls   = {start:'row-start',finish:'row-finish',sleep:'row-sleep',cp:'row-cp'};
+  
+  // Save SCHEDULE globally for GPS use
+  window.KOREA_SCHEDULE = SCHEDULE;
+
+  document.getElementById('scheduleTable').innerHTML = SCHEDULE.map((s,i) => `
+    <tr class="${rowCls[s.type]||''}">
+      <td><span class="time-mono" style="color:var(--muted);font-size:11px">${s.day}</span></td>
+      <td class="time-mono">${s.km}</td>
+      <td>
+        <strong>${s.name}</strong>
+        <div style="font-size:10px;color:var(--muted)">${s.name_en}</div>
+        ${s.hotel ? `<div style="font-size:10px;color:var(--sleep)">🏨 ${s.hotel}</div>` : ''}
+        ${s.depart ? `<div style="font-size:10px;color:var(--sleep)">${s.depart}</div>` : ''}
+      </td>
+      <td class="time-mono" style="color:var(--accent3)">${s.eta}</td>
+      <td style="font-size:11px;color:var(--muted)">${s.stop}</td>
+      <td class="time-mono" style="color:var(--accent2)">${s.elapsed}</td>
+      <td><span class="badge ${badgeCls[s.type]||'badge-supply'}">${badgeLbl[s.type]||s.type}</span></td>
+      <td>
+        <div class="nav-links">
+          <a class="nav-link nav-naver" href="https://map.naver.com/v5/search/${encodeURIComponent(s.nq||s.name)}" target="_blank">Naver</a>
+          <a class="nav-link nav-google" href="https://maps.google.com/?q=${s.lat},${s.lon}" target="_blank">Google</a>
+          ${['start','finish','cp','sleep'].includes(s.type) ? `<a class="nav-link nav-kakao" href="https://map.kakao.com/?q=${encodeURIComponent(s.nq||s.name)}" target="_blank">Kakao</a>` : ''}
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+buildSchedule();
+
+// ========== SLEEP CARDS ==========
+function buildSleepCards() {
+  const sleeps = [
+    {n:1, hotel:'H大道飯店 H Avenue Hotel', km:340, eta:'06/07 00:10', depart:'03:00', sleep:'~2h 50m', note:'익산 最短睡眠 → 嚴守 03:00 出發', lat:35.931129, lon:126.949854, nq:'익산+H대로호텔'},
+    {n:2, hotel:'菀島內西亞飯店 Wando Nesia Hotel', km:640, eta:'06/07 19:20', depart:'05:00', sleep:'~9h 40m ✓', note:'완도 最長睡眠站 → 05:00 出發恢復體力', lat:34.33578, lon:126.782398, nq:'완도+네시아호텔'},
+    {n:3, hotel:'H大道飯店 H Avenue Hotel', km:940, eta:'06/08 21:00', depart:'03:00', sleep:'~6h', note:'익산（同第一站）→ 03:00 出發最後衝刺', lat:35.926044, lon:126.951191, nq:'익산+H대로호텔'},
+  ];
+  document.getElementById('sleepCards').innerHTML = sleeps.map(s => `
+    <div class="sleep-card">
+      <h3>🛌 第${s.n}夜：${s.hotel}</h3>
+      <div class="sleep-detail"><span class="key">里程</span><span class="val">${s.km} km</span></div>
+      <div class="sleep-detail"><span class="key">預計到達</span><span class="val" style="color:var(--accent3)">${s.eta}</span></div>
+      <div class="sleep-detail"><span class="key">出發時間</span><span class="val" style="color:var(--sleep)">${s.depart}</span></div>
+      <div class="sleep-detail"><span class="key">睡眠時間</span><span class="val">${s.sleep}</span></div>
+      <div class="sleep-detail"><span class="key">備註</span><span class="val" style="color:var(--sleep);font-size:11px">${s.note}</span></div>
+      <div style="margin-top:10px;display:flex;gap:7px;flex-wrap:wrap;">
+        <a class="nav-link nav-naver" href="https://map.naver.com/v5/search/${encodeURIComponent(s.nq)}" target="_blank">📍 Naver</a>
+        <a class="nav-link nav-google" href="https://maps.google.com/?q=${s.lat},${s.lon}" target="_blank">📱 Google</a>
+        <a class="nav-link nav-kakao" href="https://map.kakao.com/?q=${encodeURIComponent(s.nq)}" target="_blank">🗺 Kakao</a>
+      </div>
+    </div>
+  `).join('');
+}
+buildSleepCards();
+
+// ========== STRATEGY ==========
+function buildStrategy() {
+  const cards = [
+    {title:'⚡ 配速基準', color:'var(--accent)', items:['平路巡航目標：25 km/h','爬坡（FTP 2.5–3 w/kg）：12–15 km/h','計算用有效均速：20 km/h','每掉 1 km/h ≈ 多花 +3h','D3（760–940km）爬升最密集，提前保留腿力','下坡目標 35–40 km/h，主動補回時間']},
+    {title:'⏱ 停留時間管理', color:'var(--accent2)', items:['補給站：最多 10 分鐘','午餐：最多 30 分鐘','住宿 #1 & #3：03:00 嚴格出發','住宿 #2（완도）：05:00 出發（最長睡眠）','目標本身無緩衝，每站必須嚴守','官方 90h 關門 → 目標 85h → 只有 5h 緩衝']},
+    {title:'🗺 韓國導航策略', color:'var(--accent3)', items:['Naver Map：最準確，有自行車坡度預覽','KakaoMap：查即時路況、便利店位置','Google Maps 韓國功能受限，作備用','建議下載 Komoot 離線路線備用','路線：RideWithGPS #54047138','便利店：CU / GS25 / 7-ELEVEN 全程密集']},
+    {title:'🌙 夜間騎行', color:'var(--sleep)', items:['前燈至少 600 流明，備用燈必備','反光衣 + 尾燈確保能見度','凌晨 2–4 時最嗜睡，靠路邊休息 15 分','備咖啡因補充品（咖啡膠囊/能量棒）','住宿出發前必喝咖啡','夜間降速 20%，注意路面狀況']},
+    {title:'🔧 機械保養', color:'var(--blue)', items:['每 300km 補充鏈條油','每站檢查輪胎氣壓和花鼓快拆','備胎 x2 + 補胎工具組必帶','電子零件防水（3M 膠帶）','手機充電線備份、行動電源必備','天雨後立即清潔煞車面']},
+    {title:'🧠 心理策略', color:'var(--warn)', items:['將路線切割為 4 天（D1~D4）','每完成一天給自己大獎勵','遇到困難路段專注「下一個 CP」','與其他車手結伴輪流破風','設定手機提醒每 30 分鐘補水','保持正向自我對話，拒絕放棄']},
+  ];
+  document.getElementById('strategyGrid').innerHTML = cards.map(c => `
+    <div class="strategy-card">
+      <h3>${c.title}</h3>
+      <ul>${c.items.map(i => `<li><span class="li-icon">▸</span>${i}</li>`).join('')}</ul>
+    </div>
+  `).join('');
+}
+buildStrategy();
+
+// ========== FOOD ==========
+function buildFood() {
+  const foods = [
+    {name:'전주 콩나물국밥', region:'全州豆芽湯飯（880km · 全州附近）', desc:'全州最知名的傳統料理，豆芽湯飯鮮美補鈉，非常適合長途騎行後補充電解質和鹽分。', tag:'補鈉 必吃'},
+    {name:'목포 낙지볶음', region:'목포 炒章魚（560km · 目浦）', desc:'目浦炒章魚，高蛋白低脂，是當地名菜。CP3 打卡後可以嘗試，補充優質蛋白質。', tag:'高蛋白'},
+    {name:'돼지국밥', region:'豬肉湯飯（全程可找）', desc:'韓式豬肉湯飯熱量密度高、消化快，是長距離騎行最理想的補碳主食，全程便利商店旁食堂都有。', tag:'高熱量'},
+    {name:'짜장면', region:'炸醬麵（全程中式料理店）', desc:'快速補充碳水化合物，價格便宜，在韓國隨處可得。騎行前 30 分鐘食用效果最佳。', tag:'快速碳水'},
+    {name:'보성 녹차 아이스크림', region:'保城綠茶冰淇淋（700km）', desc:'保城是韓國最著名的茶葉產地，騎行途中享用當地綠茶冰淇淋，消暑又有適量咖啡因。', tag:'消暑補充'},
+    {name:'순천 육회비빔밥', region:'순천 生牛肉拌飯（760km）', desc:'順天特色料理，生牛肉拌飯提供優質蛋白質和鐵質，適合補充肌肉損耗，完成大爬升後享用。', tag:'恢復補充'},
+    {name:'공주 밤막걸리', region:'公州栗子馬格利（1000km）', desc:'公州栗子馬格利，低酒精濃度，富含乳酸菌。D4 最後衝刺前，可以小酌慶祝即將完賽。', tag:'慶祝 完賽前'},
+    {name:'삼겹살 + 소주', region:'五花肉燒酒（終點附近）', desc:'完賽後的終極獎勵！韓式五花肉配燒酒，這是你撐完 85 小時、1199km 的最佳犒賞！🎉', tag:'完賽慶祝'},
+  ];
+  document.getElementById('foodGrid').innerHTML = foods.map(f => `
+    <div class="food-card">
+      <div class="food-header">${f.name}</div>
+      <div class="food-body">
+        <p style="color:var(--accent);font-size:10px;margin-bottom:4px">📍 ${f.region}</p>
+        <p>${f.desc}</p>
+        <span class="food-tag">${f.tag}</span>
+      </div>
+    </div>
+  `).join('');
+}
+buildFood();
+
+// ========== EMERGENCY ==========
+function buildEmergency() {
+  const plans = [
+    {title:'落後 30 分鐘',    content:'立即縮短補給停留至 5 分鐘以內，午餐改邊騎邊吃（飯糰 + 飲料），省回 20–25 分。', action:'每段提速 1 km/h，下坡衝 35–40 km/h，使用 Naver Map 找更快路線。'},
+    {title:'落後 60 分鐘',    content:'縮短住宿睡眠 1 小時，提早出發。取消所有非必要停留，補給全部改成騎行中進食。', action:'睡眠債積累會影響判斷力，縮短後更需注意夜間安全，適時補充咖啡因。'},
+    {title:'落後 90+ 分鐘',   content:'與大會聯繫確認是否可延長個別關門時間，評估是否需要 DNF 或繼續。考慮交通備案。', action:'首要安全，再考慮成績。身體狀況異常時勇敢 DNF，下次再來。'},
+    {title:'機械故障',         content:'爆胎 10 分鐘內可解決（備胎 + CO2 充氣）。鏈條斷裂使用鏈條器修復。可聯繫大會支援車。', action:'備零件：內胎 x2、補胎片、鏈條快扣、CO2充氣筒、多功能工具組。'},
+    {title:'身體不適',         content:'膝蓋疼痛：降低齒比、減少踩踏力量。腸胃不適：喝白粥、運動飲料，避免高脂食物。頭暈：立即停車、補水、遮蔭休息。', action:'備藥品：止痛藥、電解質錠、貼布、腸胃藥。嚴重時聯繫大會醫療人員。'},
+    {title:'迷路 / 偏離路線', content:'Naver Map 搜尋下一個 CP 地名導航。RideWithGPS App 顯示即時路線偏離提示。若嚴重偏離，就近找便利店詢問。', action:'韓國人非常友善，用手機翻譯 App 加 Google Maps 截圖說明目的地即可溝通。'},
+  ];
+  document.getElementById('emergencySection').innerHTML = `
+    <p style="color:var(--muted);font-size:12px;margin-bottom:14px">緊急情況應對手冊 - 保持冷靜，按計畫執行</p>
+    <div class="em-grid">
+      ${plans.map(p => `
+        <div class="em-card">
+          <h3>🚨 ${p.title}</h3>
+          <p>${p.content}</p>
+          <div class="em-highlight">💡 ${p.action}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+buildEmergency();
+
+// ========== TABS ==========
+function showTab(name, el) {
+  // Hide all content
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+
+  // Sync desktop tabs
+  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+  const desktopTab = document.querySelector(`.tabs .tab[onclick*="${name}"]`);
+  if (desktopTab) desktopTab.classList.add('active');
+
+  // Sync mobile bottom nav
+  document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'));
+  const mobEl = el || document.querySelector(`.mob-tab[onclick*="${name}"]`);
+  if (mobEl) mobEl.classList.add('active');
+
+  // Scroll content area back to top
+  const bs = document.querySelector('.bottom-section');
+  if (bs) bs.scrollTop = 0;
 }
 </script>
 </body>
