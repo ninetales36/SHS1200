@@ -387,7 +387,7 @@
     /* Map: collapsible, default 147px on mobile */
     #map {
       width: 100%;
-      height: 147px;
+      height: 200px;
       flex-shrink: 0;
       border-right: none;
     }
@@ -571,7 +571,7 @@
       </div>
       <div class="budget-row">
         <span class="budget-label">目標85h</span>
-        <span class="budget-val time-mono" style="color:var(--accent3)">06/09 19:00</span>
+        <span class="budget-val time-mono" style="color:var(--accent3)">06/09 16:26</span>
       </div>
       <div class="budget-row">
         <span class="budget-label">官方關門</span>
@@ -619,7 +619,7 @@
           <thead>
             <tr>
               <th>#</th>
-              <th>Day</th><th>距離</th><th>地點</th><th>預計抵達</th><th>停留</th><th>累計時數</th><th>類型</th><th>導航</th>
+              <th>Day</th><th>距離</th><th>↑ 爬升</th><th>地點</th><th>預計抵達</th><th>停留</th><th>累計時數</th><th>類型</th><th>導航</th>
             </tr>
           </thead>
           <tbody id="scheduleTable"></tbody>
@@ -677,7 +677,7 @@
 <script>
 // ========== DATA ==========
 const START_TIME = new Date('2026-06-06T06:00:00');
-const TARGET_HOURS = 85;
+const TARGET_HOURS = 82.4;
 const CUTOFF_HOURS = 90;
 const AVG_SPEED = 20; // km/h effective
 const TOTAL_KM_RACE = 1199.4;
@@ -983,27 +983,27 @@ updateCountdown();
 // ========== SCHEDULE TABLE ==========
 function buildSchedule() {
   const SCHEDULE = [
-    {day:'D1',    km:0,    name:'🚩 起點 하남 미사리',      name_en:'Start · Hanam Misari',   eta:'06/06 06:00', stop:'—',       elapsed:'0h',    type:'start',  lat:37.545104, lon:127.119165, nq:'하남미사리경정공원'},
-    {day:'D1',    km:50,   name:'이천 (Icheon)',             name_en:'Icheon City',              eta:'06/06 08:30', stop:'+10분',   elapsed:'2.7h',  type:'supply', lat:37.469689, lon:127.49796,  nq:'이천시'},
-    {day:'D1',    km:100,  name:'음성 (Eumseong)',           name_en:'Eumseong County',          eta:'06/06 11:10', stop:'+10분',   elapsed:'5.3h',  type:'supply', lat:37.206812, lon:127.747168, nq:'음성군'},
-    {day:'D1',    km:160,  name:'청주 (Cheongju)',           name_en:'Cheongju City',            eta:'06/06 14:20', stop:'+30분',   elapsed:'8.8h',  type:'lunch',  lat:36.8299,   lon:127.84604,  nq:'청주시'},
-    {day:'D1',    km:220,  name:'대전 CP1',                  name_en:'Daejeon CP1',              eta:'06/06 17:50', stop:'+10분',   elapsed:'12.0h', type:'cp',     lat:36.44019,  lon:127.69861,  nq:'대전시'},
-    {day:'D1',    km:280,  name:'논산 (Nonsan)',             name_en:'Nonsan City',              eta:'06/06 21:00', stop:'+10분',   elapsed:'15.2h', type:'supply', lat:36.16209,  lon:127.32455,  nq:'논산시'},
-    {day:'D1→2',  km:340,  name:'🛏 익산 住宿 #1',          name_en:'Iksan · H Avenue Hotel',   eta:'06/07 00:10', stop:'睡眠 ~2h50m', elapsed:'21.0h', type:'sleep', lat:35.931129, lon:126.949854, nq:'익산+H대로호텔', hotel:'H大道飯店', depart:'03:00 出發'},
-    {day:'D2',    km:390,  name:'김제 (Gimje)',              name_en:'Gimje City',               eta:'06/07 05:30', stop:'+30분',   elapsed:'24.0h', type:'lunch',  lat:35.592013, lon:126.866664, nq:'김제시'},
-    {day:'D2',    km:450,  name:'광주 CP2',                  name_en:'Gwangju CP2',              eta:'06/07 09:00', stop:'+10분',   elapsed:'27.2h', type:'cp',     lat:35.183612, lon:126.733199, nq:'광주광역시'},
-    {day:'D2',    km:500,  name:'나주 (Naju)',               name_en:'Naju City',                eta:'06/07 11:40', stop:'+10분',   elapsed:'29.8h', type:'supply', lat:34.894716, lon:126.59205,  nq:'나주시'},
-    {day:'D2',    km:560,  name:'목포 CP3 🍱',              name_en:'Mokpo CP3',                eta:'06/07 14:50', stop:'+30분',   elapsed:'33.3h', type:'cp',     lat:34.490282, lon:126.499394, nq:'목포시'},
-    {day:'D2→3',  km:640,  name:'🛏 완도 住宿 #2',          name_en:'Wando · Nesia Hotel',      eta:'06/07 19:20', stop:'睡眠 ~9h40m', elapsed:'47.0h', type:'sleep', lat:34.33578,  lon:126.782398, nq:'완도+네시아호텔', hotel:'菀島內西亞飯店 Nesia Hotel', depart:'05:00 出發 ✓ 最長睡眠'},
-    {day:'D3',    km:700,  name:'보성 (Boseong)',            name_en:'Boseong · Tea Fields',     eta:'06/08 08:00', stop:'+10분',   elapsed:'50.2h', type:'supply', lat:34.557723, lon:126.84813,  nq:'보성군'},
-    {day:'D3',    km:760,  name:'순천 (Suncheon)',           name_en:'Suncheon City',            eta:'06/08 11:10', stop:'+30분',   elapsed:'53.7h', type:'lunch',  lat:34.727403, lon:126.582141, nq:'순천시'},
-    {day:'D3',    km:820,  name:'남원 (Namwon)',             name_en:'Namwon · Jirisan',         eta:'06/08 14:40', stop:'+10분',   elapsed:'56.8h', type:'supply', lat:35.128805, lon:126.622308, nq:'남원시'},
-    {day:'D3',    km:880,  name:'전주 CP4',                  name_en:'Jeonju CP4',               eta:'06/08 17:50', stop:'+10분',   elapsed:'60.0h', type:'cp',     lat:35.52139,  lon:126.80533,  nq:'전주시'},
-    {day:'D3→4',  km:940,  name:'🛏 익산 住宿 #3',          name_en:'Iksan · H Avenue Hotel',   eta:'06/08 21:00', stop:'睡眠 ~6h',    elapsed:'69.0h', type:'sleep', lat:35.926044, lon:126.951191, nq:'익산+H대로호텔', hotel:'H大道飯店 H Avenue Hotel', depart:'03:00 出發'},
-    {day:'D4',    km:1000, name:'공주 (Gongju)',             name_en:'Gongju City',              eta:'06/09 06:00', stop:'+30분',   elapsed:'72.5h', type:'lunch',  lat:36.35328,  lon:127.0546,   nq:'공주시'},
-    {day:'D4',    km:1060, name:'천안 (Cheonan)',            name_en:'Cheonan City',             eta:'06/09 09:30', stop:'+10분',   elapsed:'75.7h', type:'supply', lat:36.67177,  lon:127.3923,   nq:'천안시'},
-    {day:'D4',    km:1120, name:'수원 (Suwon)',              name_en:'Suwon City',               eta:'06/09 12:40', stop:'+10분',   elapsed:'78.8h', type:'supply', lat:37.02637,  lon:127.26501,  nq:'수원시'},
-    {day:'D4',    km:1199, name:'🏁 終點 하남 미사리',      name_en:'Finish · Hanam Misari',    eta:'06/09 19:00', stop:'🏆 完賽', elapsed:'85h 🏆', type:'finish', lat:37.544719, lon:127.119502, nq:'하남미사리경정공원'},
+    {day:'D1', km:0, name:'🚩 起點 하남 미사리', eta:'06/06 06:00', stop:'—', elapsed:'0.0h', type:'start', lat:37.545104, lon:127.119165, nq:'하남미사리경정공원', climb:0},
+    {day:'D1', km:50, name:'이천 (Icheon)', eta:'06/06 08:22', stop:'+10분', elapsed:'2.4h', type:'supply', lat:37.469689, lon:127.49796, nq:'이천시', climb:350},
+    {day:'D1', km:100, name:'음성 (Eumseong)', eta:'06/06 11:15', stop:'+10분', elapsed:'5.3h', type:'supply', lat:37.206812, lon:127.747168, nq:'음성군', climb:450},
+    {day:'D1', km:160, name:'청주 (Cheongju)', eta:'06/06 14:34', stop:'+30분 식사', elapsed:'8.6h', type:'lunch', lat:36.8299, lon:127.84604, nq:'청주시', climb:400},
+    {day:'D1', km:220, name:'대전 CP1', eta:'06/06 18:13', stop:'+10분', elapsed:'12.2h', type:'cp', lat:36.44019, lon:127.69861, nq:'대전시', climb:350},
+    {day:'D1', km:280, name:'논산 (Nonsan)', eta:'06/06 21:23', stop:'+10분', elapsed:'15.4h', type:'supply', lat:36.16209, lon:127.32455, nq:'논산시', climb:250},
+    {day:'D1→2', km:340, name:'🛏 익산 住宿 #1', eta:'06/07 00:17', stop:'睡眠 ~2.7h', elapsed:'18.3h', type:'sleep', lat:35.931129, lon:126.949854, nq:'익산+H대로호텔', hotel:'H大道飯店 H Avenue Hotel', depart:'03:00 出發', sleepNote:'抵達後短暫休息，03:00嚴格出發（睡2.7h）', climb:200},
+    {day:'D2', km:390, name:'김제 (Gimje)', eta:'06/07 05:16', stop:'+30분 식사', elapsed:'23.3h', type:'lunch', lat:35.592013, lon:126.866664, nq:'김제시', climb:150},
+    {day:'D2', km:450, name:'광주 CP2', eta:'06/07 08:50', stop:'+10분', elapsed:'26.8h', type:'cp', lat:35.183612, lon:126.733199, nq:'광주광역시', climb:350},
+    {day:'D2', km:500, name:'나주 (Naju)', eta:'06/07 11:17', stop:'+10분', elapsed:'29.3h', type:'supply', lat:34.894716, lon:126.59205, nq:'나주시', climb:200},
+    {day:'D2', km:560, name:'목포 CP3', eta:'06/07 14:18', stop:'+30분 식사', elapsed:'32.3h', type:'cp', lat:34.490282, lon:126.499394, nq:'목포시', climb:250},
+    {day:'D2→3', km:640, name:'🛏 완도 住宿 #2', eta:'06/07 19:31', stop:'睡眠 ~9.5h', elapsed:'37.5h', type:'sleep', lat:34.33578, lon:126.782398, nq:'완도+네시아호텔', hotel:'菀島內西亞飯店 Wando Nesia Hotel', depart:'05:00 出發', sleepNote:'最長補眠站，05:00出發（睡9.5h）', climb:850},
+    {day:'D3', km:700, name:'보성 (Boseong)', eta:'06/08 08:09', stop:'+10분', elapsed:'50.2h', type:'supply', lat:34.557723, lon:126.84813, nq:'보성군', climb:400},
+    {day:'D3', km:760, name:'순천 (Suncheon)', eta:'06/08 11:19', stop:'+30분 식사', elapsed:'53.3h', type:'lunch', lat:34.727403, lon:126.582141, nq:'순천시', climb:350},
+    {day:'D3', km:820, name:'남원 (Namwon)', eta:'06/08 15:49', stop:'+10분', elapsed:'57.8h', type:'supply', lat:35.128805, lon:126.622308, nq:'남원시', climb:900},
+    {day:'D3', km:880, name:'전주 CP4', eta:'06/08 18:59', stop:'+10분', elapsed:'61.0h', type:'cp', lat:35.52139, lon:126.80533, nq:'전주시', climb:400},
+    {day:'D3→4', km:940, name:'🛏 익산 住宿 #3', eta:'06/08 21:53', stop:'睡眠 ~5.1h', elapsed:'63.9h', type:'sleep', lat:35.926044, lon:126.951191, nq:'익산+H대로호텔', hotel:'H大道飯店 H Avenue Hotel', depart:'03:00 出發', sleepNote:'最後睡眠，03:00出發最終衝刺（睡5.1h）', climb:200},
+    {day:'D4', km:1000, name:'공주 (Gongju)', eta:'06/09 06:09', stop:'+30분 식사', elapsed:'72.2h', type:'lunch', lat:36.35328, lon:127.0546, nq:'공주시', climb:450},
+    {day:'D4', km:1060, name:'천안 (Cheonan)', eta:'06/09 09:39', stop:'+10분', elapsed:'75.7h', type:'supply', lat:36.67177, lon:127.3923, nq:'천안시', climb:350},
+    {day:'D4', km:1120, name:'수원 (Suwon)', eta:'06/09 12:40', stop:'+10분', elapsed:'78.7h', type:'supply', lat:37.02637, lon:127.26501, nq:'수원시', climb:300},
+    {day:'D4', km:1199, name:'🏁 終點 하남 미사리', eta:'06/09 16:26', stop:'🎉 完賽', elapsed:'82.4h 🏆', type:'finish', lat:37.544719, lon:127.119502, nq:'하남미사리경정공원', climb:250},
   ];
   const badgeCls = {start:'badge-start',finish:'badge-finish',sleep:'badge-sleep',cp:'badge-cp',lunch:'badge-lunch',supply:'badge-supply'};
   const badgeLbl = {start:'🚩 出發',finish:'🏆 完賽',sleep:'🛌 住宿',cp:'📍 CP',lunch:'🍱 午餐',supply:'補給'};
@@ -1016,6 +1016,7 @@ function buildSchedule() {
     <tr class="${rowCls[s.type]||''}">
       <td><span class="time-mono" style="color:var(--muted);font-size:11px">${s.day}</span></td>
       <td class="time-mono">${s.km}</td>
+      <td class="time-mono" style="color:${s.climb>=700?'#ff4d4d':s.climb>=400?'var(--warn)':s.climb>=200?'var(--accent2)':'var(--muted)'};font-size:12px;white-space:nowrap">${s.climb>0?'↑'+s.climb+'m':'—'}</td>
       <td>
         <strong>${s.name}</strong>
         <div style="font-size:10px;color:var(--muted)">${s.name_en}</div>
@@ -1085,22 +1086,60 @@ buildStrategy();
 // ========== FOOD ==========
 function buildFood() {
   const foods = [
-    {name:'전주 콩나물국밥', region:'全州豆芽湯飯（880km · 全州附近）', desc:'全州最知名的傳統料理，豆芽湯飯鮮美補鈉，非常適合長途騎行後補充電解質和鹽分。', tag:'補鈉 必吃'},
-    {name:'목포 낙지볶음', region:'목포 炒章魚（560km · 目浦）', desc:'目浦炒章魚，高蛋白低脂，是當地名菜。CP3 打卡後可以嘗試，補充優質蛋白質。', tag:'高蛋白'},
-    {name:'돼지국밥', region:'豬肉湯飯（全程可找）', desc:'韓式豬肉湯飯熱量密度高、消化快，是長距離騎行最理想的補碳主食，全程便利商店旁食堂都有。', tag:'高熱量'},
-    {name:'짜장면', region:'炸醬麵（全程中式料理店）', desc:'快速補充碳水化合物，價格便宜，在韓國隨處可得。騎行前 30 分鐘食用效果最佳。', tag:'快速碳水'},
-    {name:'보성 녹차 아이스크림', region:'保城綠茶冰淇淋（700km）', desc:'保城是韓國最著名的茶葉產地，騎行途中享用當地綠茶冰淇淋，消暑又有適量咖啡因。', tag:'消暑補充'},
-    {name:'순천 육회비빔밥', region:'순천 生牛肉拌飯（760km）', desc:'順天特色料理，生牛肉拌飯提供優質蛋白質和鐵質，適合補充肌肉損耗，完成大爬升後享用。', tag:'恢復補充'},
-    {name:'공주 밤막걸리', region:'公州栗子馬格利（1000km）', desc:'公州栗子馬格利，低酒精濃度，富含乳酸菌。D4 最後衝刺前，可以小酌慶祝即將完賽。', tag:'慶祝 完賽前'},
-    {name:'삼겹살 + 소주', region:'五花肉燒酒（終點附近）', desc:'完賽後的終極獎勵！韓式五花肉配燒酒，這是你撐完 85 小時、1199km 的最佳犒賞！🎉', tag:'完賽慶祝'},
+    {name:'전주 콩나물국밥', region:'全州豆芽湯飯（880km · 전주）', tag:'補鈉 必吃',
+     shops:[
+       {n:'현대옥 본점（現代屋）', note:'24小時不打烊，全주最具代表性，兩種煮法都有', addr:'전북 전주시 완산구 화산천변2길 7-4'},
+       {n:'왱이집（旺二家）', note:'40年老店，三大天王之一，皮薄湯清爽', addr:'전주시 완산구 동문길 88'},
+       {n:'삼백집（三百家）', note:'80年歷史最老字號，傳統直火式', addr:'전주시 완산구 전주객사3길 12'},
+     ]},
+    {name:'목포 낙지볶음', region:'目浦炒章魚（560km · 목포）', tag:'高蛋白',
+     shops:[
+       {n:'독천골（獨川谷）', note:'Diningcode 評分 4.3★，現撈세발낙지（細腳章魚）超新鮮', addr:'전남 목포시 영산로29번길 11'},
+       {n:'하당먹거리（荷塘美食）', note:'낙지탕탕이 4.3★，活章魚料理多樣，當地人最愛', addr:'전남 목포시 하당로 81'},
+       {n:'뜰채（庭院勺）', note:'特製香蕉甜醬낙지볶음，낙지호롱구이也是招牌', addr:'전남 목포시 영산로29번길 10'},
+     ]},
+    {name:'보성 꼬막·녹차', region:'保城꼬막&綠茶（700km · 보성）', tag:'在地特色',
+     shops:[
+       {n:'정가네원조꼬막회관（鄭家꼬막）', note:'벌교꼬막（血蛤）定食一人 ₩20,000，官方推薦', addr:'보성군 벌교읍 조정래길 55'},
+       {n:'율포회센터（栗浦海鮮中心）', note:'現選現做，廣어·전어·전복等超多種類', addr:'전남 보성군 회천면 율포2길 26'},
+       {n:'특미관（特味館）', note:'所有料理都有綠茶風味，녹차삼겹살是招牌', addr:'전남 보성군 보성읍 봉화로 53'},
+     ]},
+    {name:'순천 육회비빔밥', region:'順天生牛肉拌飯（760km · 순천）', tag:'恢復補充',
+     shops:[
+       {n:'욕보할매집（욕쟁이奶奶）', note:'짱뚱어탕（跳彈魚湯）超滋補，在地人從小吃的老店', addr:'전남 순천시 별량면 별량장길 20'},
+       {n:'술벗상회（酒友商會）', note:'Diningcode 橫掃 4.8★，炭火直烤海鮮超鮮', addr:'전남 순천시 해룡면 신성로 166'},
+       {n:'순천만갈대밭식당（蘆葦田食堂）', note:'꼬막 & 짱뚱어定食，坐擁純天然濕地景觀', addr:'전남 순천시 대대동 162-2'},
+     ]},
+    {name:'전주 비빔밥', region:'全州拌飯（880km · 전주 CP4）', tag:'碳水補充',
+     shops:[
+       {n:'한국집（韓國家）', note:'全州비빔밥老字號，銅碗盛裝傳統拌飯', addr:'전주시 완산구 태조로 49'},
+       {n:'조점례남문피순대（南門血腸）', note:'전주名物豬血腸＋豬雜湯，補充鐵質好選擇', addr:'전주시 완산구 전주객사3길 6'},
+       {n:'미가옥（美佳屋）', note:'콩나물국밥名店，排隊人氣等同現代옥', addr:'전북 전주시 완산구 황강서원1길 3-8'},
+     ]},
+    {name:'돼지국밥', region:'豬肉湯飯（全程補給）', tag:'高熱量快補',
+     shops:[
+       {n:'전국 편의점 GS25 / CU', note:'24H，GS25「진짬뽕」泡麵or「한솥도시락」便當，快速補碳', addr:'全程路線皆可找到'},
+       {n:'공주 곰나루쌈밥（公州곰나루包飯）', note:'公州在地早餐名店，清爽쌈밥定食補充蔬菜', addr:'충남 공주시 금학1길 18'},
+       {n:'완도어반（완도 Urban）', note:'完島生魚定食，烤고등어（鯖魚）不鹹又多汁', addr:'전남 완도군 완도읍 해변공원길 4'},
+     ]},
+    {name:'삼겹살 完賽慶祝', region:'五花肉燒酒（終點 하남 미사리）', tag:'🎉 完賽必吃',
+     shops:[
+       {n:'미사리 조정경기장 앞 고기집', note:'終點附近燒烤街，完賽後第一件事', addr:'경기 하남시 미사동 619 일대'},
+       {n:'이대감댁（李大監宅）', note:'하남 人氣燒肉店，黑豬삼겹살特別肉質好', addr:'경기 하남시 미사강변북로 180'},
+       {n:'을지로 노가리골목', note:'若在首爾過夜，傳說中的乾魷魚＋燒酒街', addr:'서울 중구 을지로 119 일대'},
+     ]},
   ];
   document.getElementById('foodGrid').innerHTML = foods.map(f => `
     <div class="food-card">
       <div class="food-header">${f.name}</div>
       <div class="food-body">
-        <p style="color:var(--accent);font-size:10px;margin-bottom:4px">📍 ${f.region}</p>
-        <p>${f.desc}</p>
-        <span class="food-tag">${f.tag}</span>
+        <p style="color:var(--accent);font-size:10px;margin-bottom:6px">📍 ${f.region} &nbsp;<span class="food-tag">${f.tag}</span></p>
+        ${f.shops ? f.shops.map(s => `
+          <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:6px;padding:7px 9px;margin-bottom:5px;">
+            <div style="font-weight:700;font-size:12px;color:var(--text)">${s.n}</div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:2px">${s.note}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px">📌 ${s.addr}</div>
+          </div>`).join('') : `<p>${f.desc||''}</p>`}
       </div>
     </div>
   `).join('');
